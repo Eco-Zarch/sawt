@@ -12,7 +12,7 @@ Work in Progress
 1. Start cloud function locally:
 
 ```
-cd packages/googlecloud/functions
+cd packages/googlecloud/functions/getanswer
 pip install -r requirements.txt
 OPENAI_API_KEY=sk-XXX functions-framework --target=getanswer --debug
 ```

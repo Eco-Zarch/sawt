@@ -4,31 +4,71 @@ import os
 import whisper
 
 
-def get_mp4_links(url="https://cityofno.granicus.com/ViewPublisher.php?view_id=42"):
+url = "https://cityofno.granicus.com/ViewPublisher.php?view_id=42"
+
+def get_all_links():
     response = requests.get(url)
     response.raise_for_status()
 
     soup = BeautifulSoup(response.text, "html.parser")
+    
+    meetings=[]
+    current_meeting={}
 
-    # Find all mp4 links directly on the page
-    mp4_links = [
-        a["href"] for a in soup.find_all("a", href=True) if ".mp4" in a["href"]
-    ]
+    for a in soup.find_all("a", href=True):
+        href = a["href"].strip()
+        if href.startswith("//"):
+            href = "https:" + href
 
-    return mp4_links
+        if ".mp4" in href:
+            current_meeting["video"] = href
+        elif "AgendaViewer.php" in href:
+            current_meeting["agenda"] = href
+        elif "MinutesViewer.php" in href:
+            current_meeting["minutes"] = href
+
+        if "video" in current_meeting:
+            meetings.append(current_meeting)
+            current_meeting = {}
+
+    return meetings
 
 
-def download_video(mp4_link, save_dir="."):
+def download_file(url, save_dir=".", file_type=""):
     # Set the file name based on the URL
-    local_filename = os.path.join(save_dir, os.path.basename(mp4_link))
+    if file_type == "agenda" or file_type == "minutes":
+        filename = f"{file_type}_{os.path.basename(url).split('?')[0]}.txt"  
+        local_filename = os.path.join(save_dir, filename)
+    else:
+        local_filename = os.path.join(save_dir, f"{file_type}_{os.path.basename(url)}")
 
     # Download the file
-    response = requests.get(mp4_link, stream=True)
-    with open(local_filename, "wb") as f:
-        for chunk in response.iter_content(chunk_size=8192):
-            if chunk:
-                f.write(chunk)
-    print(f"Video downloaded as {local_filename}")
+    response = requests.get(url, stream=True)
+    response.raise_for_status()
+
+    if "text/html" in response.headers.get("Content-Type", ""):
+        soup = BeautifulSoup(response.text, "html.parser")
+        # Extract plain text, removing scripts, styles, and empty lines
+        for script_or_style in soup(["script", "style"]):
+            script_or_style.decompose()  # Remove these tags
+        
+        text_content = soup.get_text(separator="\n")
+        # Clean up whitespace and lines
+        lines = [line.strip() for line in text_content.splitlines() if line.strip()]
+        clean_text = "\n".join(lines)
+        
+        # Save clean text to file
+        with open(local_filename, "w") as f:
+            f.write(clean_text)
+        
+        print(f"{file_type.capitalize()} downloaded and saved as plain text: {local_filename}")
+    else:
+        # If not HTML (e.g., a video file), save as binary
+        with open(local_filename, "wb") as f:
+            for chunk in response.iter_content(chunk_size=8192):
+                if chunk:
+                    f.write(chunk)
+        print(f"{file_type.capitalize()} downloaded as {local_filename}")
     return local_filename
 
 
@@ -46,20 +86,32 @@ def transcribe_video(file_path):
     return transcription_filename
 
 
-def process_video_by_index(index):
-    mp4_links = get_mp4_links()
+def process_links_by_index(index):
+    meetings= get_all_links()
 
-    if not mp4_links or index >= len(mp4_links):
-        print(f"No video found at index {index}")
+    if index >= len(meetings):
+        print(f"No meeting found at index {index}")
         return
 
-    # Select video link by index
-    mp4_link = mp4_links[index]
+    meeting = meetings[index]
 
-    local_video_path = download_video(mp4_link)
+    if "video" in meeting:
+        video_path = download_file(meeting["video"], file_type="video")
+        transcribe_video(video_path)
+    else:
+        print(f"No video found for meeting at index {index}")
 
-    transcribe_video(local_video_path)
+    if "agenda" in meeting:
+        download_file(meeting["agenda"], file_type="agenda")
+    else:
+        print(f"No agenda found for meeting at index {index}")
+
+    if "minutes" in meeting:
+        download_file(meeting["minutes"], file_type="minutes")
+    else:
+        print(f"No minutes found for meeting at index {index}")
+
 
 
 # 0 indexed for the most recent video
-process_video_by_index(154)
+process_links_by_index(12)

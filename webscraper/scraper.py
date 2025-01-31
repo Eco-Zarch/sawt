@@ -3,6 +3,9 @@ from bs4 import BeautifulSoup
 import os
 import whisper
 
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
+
 
 url = "https://cityofno.granicus.com/ViewPublisher.php?view_id=42"
 
@@ -112,6 +115,12 @@ def process_links_by_index(index):
         print(f"No minutes found for meeting at index {index}")
 
 
+#def upload_to_yt(index):
+
+
+
+
 
 # 0 indexed for the most recent video
-process_links_by_index(12)
+process_links_by_index(8)
+

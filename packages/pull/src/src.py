@@ -2,7 +2,7 @@ import json
 from youtube_transcript_api import YouTubeTranscriptApi
 
 video_data = [
-     ['https://www.youtube.com/watch?v=t8uqW_ZMYiE', 'Utility, Cable, Telecom, and Technology Committee Meeting 1/30/2024', '1/30/2024'] ]
+     ['https://www.youtube.com/watch?v=_MrtV0S83Xk', 'Quality of Life Committee Meeting', '1/22/2024'] ]
    # ['https://www.youtube.com/watch?v=6f_SNqcisq8', 'City Council Meeting 1/9/2025', '1/9/2025'] ]
 
 '''['https://www.youtube.com/watch?v=j3wYgcTct2E', 'City Council Meeting 11/16/2023', '11/16/2023'],
@@ -76,7 +76,7 @@ for video_url, video_title, publish_date in video_data:
     all_segments.extend(segments)
 
 output = {'messages': all_segments}
-with open('packages/backend/src/json_fc_directory/fc_transcript_1_2024_test.json', 'w') as f:
+with open('packages/backend/src/json_test_directory/test_transcript_1__22_2024_.json', 'w') as f:
     json.dump(output, f, indent=2) 
 '''
 output = {'messages': all_segments}

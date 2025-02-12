@@ -256,8 +256,8 @@ def create_vector_dbs(
     #doc_directory,
     #pc_directory,
    # news_directory,
-    in_depth_embeddings,
-    test_json_directory
+    test_json_directory,
+    in_depth_embeddings
 ):
     # Create databases from transcripts and documents
     #fc_video_docs = create_db_from_fc_transcripts(fc_json_directory)

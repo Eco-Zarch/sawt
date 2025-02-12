@@ -18,7 +18,7 @@ def main():
     pc_json_directory = "json_public_comment_directory"
     news_json_directory = "news_directory"
     '''
-    test_json_directory = "json_test_directory" #test
+    test_json_directory = "src/json_test_directory" #test 
     print(f"Preprocessing videos, agendas, and minutes to generate a cache.")
     general_embeddings, in_depth_embeddings = create_embeddings()
 

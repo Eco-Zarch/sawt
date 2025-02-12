@@ -12,3 +12,4 @@ pytube
 docx2txt
 dvc
 dvc-gs
+jq

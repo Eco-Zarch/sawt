@@ -5,6 +5,8 @@ import random
 import sys
 import time
 
+import json
+
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaFileUpload
@@ -68,42 +70,47 @@ https://developers.google.com/api-client-library/python/guide/aaa_client_secrets
 
 VALID_PRIVACY_STATUSES = ("public", "private", "unlisted")
 
-
-def get_authenticated_service(args):
-  flow = flow_from_clientsecrets(CLIENT_SECRETS_FILE,
-    scope=YOUTUBE_UPLOAD_SCOPE,
-    message=MISSING_CLIENT_SECRETS_MESSAGE)
-
-  storage = Storage("%s-oauth2.json" % sys.argv[0])
-  credentials = storage.get()
-
-  if credentials is None or credentials.invalid:
-    credentials = run_flow(flow, storage, args)
-
-  return build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION,
-    http=credentials.authorize(httplib2.Http()))
-
-def initialize_upload(youtube, options):
-  tags = None
-  if options.keywords:
-    tags = options.keywords.split(",")
-
-  body=dict(
-    snippet=dict(
-      title=options.title,
-      description=options.description,
-      tags=tags,
-      categoryId=options.category
-    ),
-    status=dict(
-      privacyStatus=options.privacyStatus
+def get_authenticated_service():
+    flow = flow_from_clientsecrets(
+        CLIENT_SECRETS_FILE,
+        scope=YOUTUBE_UPLOAD_SCOPE,
+        message=MISSING_CLIENT_SECRETS_MESSAGE
     )
-  )
+
+    storage = Storage("youtube-oauth2.json")
+    credentials = storage.get()
+
+    if credentials is None or credentials.invalid:
+        credentials = run_flow(flow, storage)
+
+    return build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION,
+                 http=credentials.authorize(httplib2.Http()))
+
+def initialize_upload(youtube, video_file, title, description, privacyStatus="public"):
+    body = dict(
+        snippet=dict(
+            title=title,
+            description=description,
+            categoryId="22"  # Default category
+        ),
+        status=dict(
+            privacyStatus=privacyStatus
+        )
+    )
+
+    insert_request = youtube.videos().insert(
+        part=",".join(body.keys()),
+        body=body,
+        media_body=MediaFileUpload(video_file, chunksize=-1, resumable=True)
+    )
+
+    resumable_upload(insert_request)
+
 
   # Call the API's videos.insert method to create and upload the video.
-  insert_request = youtube.videos().insert(
-    part=",".join(body.keys()),
-    body=body,
+  #insert_request = youtube.videos().insert(
+    #part=",".join(body.keys()),
+    #body=body,
     # The chunksize parameter specifies the size of each chunk of data, in
     # bytes, that will be uploaded at a time. Set a higher value for
     # reliable connections as fewer chunks lead to faster uploads. Set a lower
@@ -115,10 +122,10 @@ def initialize_upload(youtube, options):
     # practice, but if you're using Python older than 2.6 or if you're
     # running on App Engine, you should set the chunksize to something like
     # 1024 * 1024 (1 megabyte).
-    media_body=MediaFileUpload(options.file, chunksize=-1, resumable=True)
-  )
+    #media_body=MediaFileUpload(options.file, chunksize=-1, resumable=True)
+  #)
 
-  resumable_upload(insert_request)
+  #resumable_upload(insert_request)
 
 # This method implements an exponential backoff strategy to resume a
 # failed upload.
@@ -155,33 +162,24 @@ def resumable_upload(insert_request):
       print("Sleeping %f seconds and then retrying..." % sleep_seconds)
       time.sleep(sleep_seconds)
 
+def load_metadata(): 
+  with open('video_metadata.json', 'r') as file:
+      data = json.load(file)
+      return data 
+
 if __name__ == '__main__':
-  argparser.add_argument("--file", required=True, help="Video file to upload")
-  argparser.add_argument("--title", help="Video title", default="Test Title")
-  argparser.add_argument("--description", help="Video description",
-    default="Test Description")
-  argparser.add_argument("--category", default="22",
-    help="Numeric video category. " +
-      "See https://developers.google.com/youtube/v3/docs/videoCategories/list")
-  argparser.add_argument("--keywords", help="Video keywords, comma separated",
-    default="")
-  argparser.add_argument("--privacyStatus", choices=VALID_PRIVACY_STATUSES,
-    default=VALID_PRIVACY_STATUSES[0], help="Video privacy status.")
-  args = argparser.parse_args()
+  metadata = load_metadata()
 
-  if not os.path.exists(args.file):
-    exit("Please specify a valid file using the --file= parameter.")
+  video_file = metadata["video"]
+  title = metadata["title"]
+  date = metadata["date"]
+  description = f"Recorded on {date}.\n\n"
+  # Add URL to city council website associated with video 
 
-  youtube = get_authenticated_service(args)
+  youtube = get_authenticated_service()
+
   try:
-    initialize_upload(youtube, args)
+      initialize_upload(youtube, video_file, title, description)
+      print(f"Successfully uploaded: {title}")
   except HttpError as e:
-    print ("An HTTP error %d occurred:\n%s") % (e.resp.status, e.content)
-
-
-
-'''
-To Run: 
-python YTupload.py --file="cityofno_b0240e3e-0513-4ca9-9233-5c7a12afb0a9.mp4" --title="Video Test3" --description="Description"
- --keywords="keyword1,keyword2" --privacyStatus="private"
-'''
+      print(f"Upload failed: {e}")

@@ -33,6 +33,14 @@ def get_all_links():
 
             for a in row.find_all("a", href=True):
                 href = a["href"].strip()
+
+                if href == "javascript:void(0);" and "onclick" in a.attrs:
+                    onclick_text = a["onclick"]
+                    match = re.search(r"window\.open\('([^']+)'", onclick_text)
+                    if match:
+                        video_page_url = "https:" + match.group(1)  # Ensure it's a full URL
+                        meeting_data["video_page"] = video_page_url
+    
                 if href.startswith("//"):
                     href = "https:" + href
                 if ".mp4" in href:
@@ -46,6 +54,7 @@ def get_all_links():
                 meetings.append(meeting_data)
 
     return meetings
+    
 
 def get_date_time(raw_text):
     match = re.search(r"(\w+,\s\w+\s\d{1,2},\s\d{4})\s*-\s*(\d{1,2}:\d{2}\s*[APMapm]{2})", raw_text)
@@ -107,6 +116,7 @@ def process_links_by_index(index):
         "title": meeting["title"],
         "date": meeting["date"],
         "time": meeting["time"],
+        "video_page": meeting.get("video_page", "N/A"),
         "video": None,
         "agenda": None,
         "minutes": None
@@ -136,6 +146,6 @@ def save_metadata(metadata):
         json.dump(metadata, f, indent=4)
     print(f"Metadata saved as {filename}")
 
-metadata = process_links_by_index(9) 
+metadata = process_links_by_index(0) 
 if metadata:
     save_metadata(metadata)

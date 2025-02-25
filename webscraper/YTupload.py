@@ -173,8 +173,9 @@ if __name__ == '__main__':
   video_file = metadata["video"]
   title = metadata["title"]
   date = metadata["date"]
-  description = f"Recorded on {date}.\n\n"
   # Add URL to city council website associated with video 
+  video_page = metadata["video_page"]
+  description = f"Recorded on {date}.\n\nWatch the original video on the New Orleans City Council website here: {video_page}"
 
   youtube = get_authenticated_service()
 

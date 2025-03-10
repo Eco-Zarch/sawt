@@ -22,6 +22,9 @@ ssl._create_default_https_context = ssl._create_unverified_context
 
 URL = "https://cityofno.granicus.com/ViewPublisher.php?view_id=42"
 
+
+# Scraper code 
+
 def get_all_links():
     response = requests.get(URL)
     response.raise_for_status()
@@ -112,45 +115,49 @@ def transcribe_video(file_path):
     print(f"Transcription saved: {transcription_filename}")
     return transcription_filename
 
-def process_links_by_index(index):
+def process_links_by_indices(indices):
     meetings = get_all_links()
+    metadata_list = []
 
-    if index >= len(meetings):
-        print(f"No meeting found at index {index}")
-        return None
+    for index in indices:
+        if index >= len(meetings):
+            print(f"No meeting found at index {index}")
+            continue
 
-    meeting = meetings[index]
+        meeting = meetings[index]
+        print(f"\nProcessing meeting: {meeting['title']} on {meeting['date']} at {meeting['time']}")
 
-    print(f"Downloading meeting: {meeting['title']} on {meeting['date']} at {meeting['time']}")
+        metadata = {
+            "title": meeting["title"],
+            "date": meeting["date"],
+            "time": meeting["time"],
+            "video_page": meeting.get("video_page", "N/A"),
+            "video": None,
+            "agenda": None,
+            "minutes": None
+        }
 
-    metadata = {
-        "title": meeting["title"],
-        "date": meeting["date"],
-        "time": meeting["time"],
-        "video_page": meeting.get("video_page", "N/A"),
-        "video": None,
-        "agenda": None,
-        "minutes": None
-    }
+        if "video" in meeting:
+            metadata["video"] = download_file(meeting["video"], file_type="video")
+            transcribe_video(metadata["video"])
+        else:
+            print("No video found.")
 
-    if "video" in meeting:
-        metadata["video"] = download_file(meeting["video"], file_type="video")
-        transcribe_video(metadata["video"])
-    else:
-        print("No video found.")
+        if "agenda" in meeting:
+            metadata["agenda"] = download_file(meeting["agenda"], file_type="agenda")
+        else:
+            print("No agenda found.")
 
-    if "agenda" in meeting:
-        metadata["agenda"] = download_file(meeting["agenda"], file_type="agenda")
-    else:
-        print("No agenda found.")
+        if "minutes" in meeting:
+            metadata["minutes"] = download_file(meeting["minutes"], file_type="minutes")
+        else:
+            print("No minutes found.")
 
-    if "minutes" in meeting:
-        metadata["minutes"] = download_file(meeting["minutes"], file_type="minutes")
-    else:
-        print("No minutes found.")
+        metadata_list.append(metadata)
 
-    return metadata
+    return metadata_list 
 
+# Youtube upload code 
 
 # Explicitly tell the underlying HTTP transport library not to retry, since
 # we are handling retry logic ourselves.
@@ -227,13 +234,23 @@ def initialize_upload(youtube, video_file, title, description, privacyStatus="pu
     body = dict(
         snippet=dict(
             title=title,
-            description=description,
-            categoryId="22"  # Default category
+            description=description
         ),
         status=dict(
             privacyStatus=privacyStatus
         )
     )
+
+    insert_request = youtube.videos().insert(
+        part="snippet,status",
+        body=body,
+        media_body=MediaFileUpload(video_file, chunksize=-1, resumable=True)
+    )
+
+    video_id = resumable_upload(insert_request) 
+    video_url = f"https://www.youtube.com/watch?v={video_id}"  
+
+    return video_url 
 
     insert_request = youtube.videos().insert(
         part=",".join(body.keys()),
@@ -267,58 +284,66 @@ def initialize_upload(youtube, video_file, title, description, privacyStatus="pu
 # This method implements an exponential backoff strategy to resume a
 # failed upload.
 def resumable_upload(insert_request):
-  response = None
-  error = None
-  retry = 0
-  while response is None:
-    try:
-      print("Uploading file...")
-      status, response = insert_request.next_chunk()
-      if response is not None:
-        if 'id' in response:
-          print("Video id '%s' was successfully uploaded." % response['id'])
-        else:
-          exit("The upload failed with an unexpected response: %s" % response)
-    except HttpError as e:
-      if e.resp.status in RETRIABLE_STATUS_CODES:
-        error = "A retriable HTTP error %d occurred:\n%s" % (e.resp.status,
-                                                             e.content)
-      else:
-        raise
-    except RETRIABLE_EXCEPTIONS as e:
-      error = "A retriable error occurred: %s" % e
+    response = None
+    error = None
+    retry = 0
 
-    if error is not None:
-      print(error)
-      retry += 1
-      if retry > MAX_RETRIES:
-        exit("No longer attempting to retry.")
+    while response is None:
+        try:
+            print("Uploading file...")
+            status, response = insert_request.next_chunk()
+            if response is not None and 'id' in response:
+                video_id = response['id']
+                print(f"Video uploaded successfully: https://www.youtube.com/watch?v={video_id}")
+                return video_id  # Return video ID after upload
+            else:
+                exit("Upload failed with unexpected response: %s" % response)
+        except HttpError as e:
+            if e.resp.status in RETRIABLE_STATUS_CODES:
+                error = f"A retriable HTTP error {e.resp.status} occurred:\n{e.content}"
+            else:
+                raise
+        except RETRIABLE_EXCEPTIONS as e:
+            error = f"A retriable error occurred: {e}"
 
-      max_sleep = 2 ** retry
-      sleep_seconds = random.random() * max_sleep
-      print("Sleeping %f seconds and then retrying..." % sleep_seconds)
-      time.sleep(sleep_seconds)
+        if error is not None:
+            print(error)
+            retry += 1
+            if retry > MAX_RETRIES:
+                exit("No longer attempting to retry.")
 
+            max_sleep = 2 ** retry
+            sleep_seconds = random.random() * max_sleep
+            print(f"Sleeping {sleep_seconds} seconds and then retrying...")
+            time.sleep(sleep_seconds)
 
 if __name__ == '__main__':
-    metadata = process_links_by_index(0)
+    indices_to_process = [2, 4] 
 
-    if metadata and metadata["video"]:
-        video_file = metadata["video"]
-        title = metadata["title"]
-        date = metadata["date"]
-        # Add URL to city council website associated with video 
-        video_page = metadata["video_page"]
-        description = f"Recorded on {date}.\n\nWatch the original video on the New Orleans City Council website here: {video_page}"
+    metadata_list = process_links_by_indices(indices_to_process)
+    youtube = get_authenticated_service()
+    uploaded_videos = []
 
-        youtube = get_authenticated_service()
+    for metadata in metadata_list:
+        if metadata and metadata["video"]:
+            video_file = metadata["video"]
+            title = metadata["title"]
+            date = metadata["date"]
+            video_page = metadata["video_page"]
+            description = f"Recorded on {date}.\n\nWatch the original video on the New Orleans City Council website here: {video_page}"
 
-    try:
-        initialize_upload(youtube, video_file, title, description)
-        print(f"Successfully uploaded: {title}")
-    except HttpError as e:
-        print(f"Upload failed: {e}")
+            try:
+                video_url = initialize_upload(youtube, video_file, title, description)
+                uploaded_videos.append({
+                    "title": title,
+                    "date": date,
+                    "youtube_url": video_url
+                })
+                print(f"Uploaded: {video_url}")
+            except HttpError as e:
+                print(f"Upload failed for {title}: {e}")
 
-# link that youtube video is at 
-# key, name and date 
-# state: uploaded, transcript pulled, transcript in dvc
+    print("\nAll Uploaded Videos:")
+    for video in uploaded_videos:
+        print(f"{video['title']} ({video['date']}): {video['youtube_url']}")
+

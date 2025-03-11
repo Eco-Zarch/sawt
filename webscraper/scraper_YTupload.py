@@ -8,6 +8,7 @@ import httplib2
 import random
 import sys
 import time
+import pandas
 
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
@@ -16,12 +17,22 @@ from oauth2client.client import flow_from_clientsecrets
 from oauth2client.file import Storage
 from oauth2client.tools import argparser, run_flow
 
+
 import re
 
 import ssl
+
+
+# Create dataframe
+#LOG_FILE = "city_council_video_status_log.json"
+#COLUMNS = []
+
+
+
+
 ssl._create_default_https_context = ssl._create_unverified_context
 
-URL = "https://cityofno.granicus.com/ViewPublisher.php?view_id=42"
+URL = "https://cityofno.granicus.com/ViewPublisher.php?view_id=42" #link to city council website where meetings are posted daily
 
 
 # Scraper code 
@@ -146,35 +157,24 @@ def process_links_by_indices(indices):
         print(f"\nProcessing meeting: {meeting['title']} on {meeting['date']} at {meeting['time']}")
 
         metadata = {
+            "meeting_id": meeting["mp4_link"],
             "title": meeting["title"],
             "date": meeting["date"],
             "time": meeting["time"],
             "watch_link": meeting.get("watch_link", "N/A"),
-            "mp4_link": None,
+            "mp4_path": None,
             "YT_link": None,
             "State": None
-            #"agenda": None,
-            #"minutes": None
         }
 
         if "mp4_link" in meeting:
-            metadata["mp4_link"] = download_file(meeting["mp4_link"], file_type="mp4_link")
-            #transcribe_video(metadata["mp4_link"])
+            metadata["meeting_id"] = meeting["mp4_link"]
+            metadata["mp4_path"] = download_file(meeting["mp4_link"], file_type="mp4_link")
         else:
             print("No video found.")
 
-        '''if "agenda" in meeting:
-            metadata["agenda"] = download_file(meeting["agenda"], file_type="agenda")
-        else:
-            print("No agenda found.")
-
-        if "minutes" in meeting:
-            metadata["minutes"] = download_file(meeting["minutes"], file_type="minutes")
-        else:
-            print("No minutes found.")'''
 
         metadata_list.append(metadata)
-
     return metadata_list 
 
 # Youtube upload code 
@@ -310,6 +310,8 @@ def resumable_upload(insert_request):
             if response is not None and 'id' in response:
                 video_id = response['id']
                 print(f"Video uploaded successfully: https://www.youtube.com/watch?v={video_id}")
+                global meeting
+                metadata["YT_link"] = f"https://www.youtube.com/watch?v={video_id}"
                 return video_id  # Return video ID after upload
             else:
                 exit("Upload failed with unexpected response: %s" % response)
@@ -333,7 +335,7 @@ def resumable_upload(insert_request):
             time.sleep(sleep_seconds)
 
 if __name__ == '__main__':
-    indices_to_process = [2, 4]  # Indices of meetings to process
+    indices_to_process = [1]  # Indices of meetings to process
 
     metadata_list = process_links_by_indices(indices_to_process)
     youtube = get_authenticated_service()
@@ -341,8 +343,8 @@ if __name__ == '__main__':
     # Iterate through each processed meeting's metadata
     for metadata in metadata_list:
         # Ensure the metadata is valid
-        if metadata and metadata["mp4_link"]:
-            video_file = metadata["mp4_link"]
+        if metadata and metadata["mp4_path"]:
+            video_file = metadata["mp4_path"]
             title = metadata["title"]
             date = metadata["date"]
             watch_link = metadata["watch_link"]
@@ -354,8 +356,13 @@ if __name__ == '__main__':
             print(f"Uploading {video_file} to YouTube...") 
             initialize_upload(youtube, video_file, title, description)  
             print(f"Uploaded: {title}")
+            print(metadata)
         except HttpError as e:
             print(f"Upload failed for {title}: {e}")
+
+
+
+
 
 # update status as uploaded to YT
 #video_id = resumable_upload(insert_request) 

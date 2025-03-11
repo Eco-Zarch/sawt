@@ -1,3 +1,4 @@
+
 import requests
 from bs4 import BeautifulSoup
 import os
@@ -26,6 +27,10 @@ URL = "https://cityofno.granicus.com/ViewPublisher.php?view_id=42"
 # Scraper code 
 
 def get_all_links():
+    """
+    Scrapes the webpage to grab the metadata associated with the video links.
+    Returns a list of dictionaries containing the metadata.
+    """
     response = requests.get(URL)
     response.raise_for_status()
 
@@ -36,7 +41,8 @@ def get_all_links():
 
     for row in rows:
         meeting_data = {}
-
+        
+        # Get title and date/time from webpage
         columns = row.find_all("td", class_="listItem")
 
         if len(columns) >= 2:
@@ -44,7 +50,8 @@ def get_all_links():
 
             raw_date_time = columns[1].get_text(strip=True)
             meeting_data["date"], meeting_data["time"] = get_date_time(raw_date_time)
-
+            
+            # Get both mp4 link and watch page link 
             for a in row.find_all("a", href=True):
                 href = a["href"].strip()
 
@@ -52,31 +59,38 @@ def get_all_links():
                     onclick_text = a["onclick"]
                     match = re.search(r"window\.open\('([^']+)'", onclick_text)
                     if match:
-                        video_page_url = "https:" + match.group(1)  # Ensure it's a full URL
+                        video_page_url = "https:" + match.group(1)  
                         meeting_data["video_page"] = video_page_url
     
                 if href.startswith("//"):
                     href = "https:" + href
                 if ".mp4" in href:
-                    meeting_data["video"] = href
-                elif "AgendaViewer.php" in href:
-                    meeting_data["agenda"] = href
-                elif "MinutesViewer.php" in href:
-                    meeting_data["minutes"] = href
+                    meeting_data["mp4_link"] = href
+                #elif "AgendaViewer.php" in href:
+                    #meeting_data["agenda"] = href
+                #elif "MinutesViewer.php" in href:
+                    #meeting_data["minutes"] = href
 
-            if "video" in meeting_data:
+            if "mp4_link" in meeting_data:
                 meetings.append(meeting_data)
 
     return meetings
     
 
 def get_date_time(raw_text):
+    """
+    Gets and returns the date and time from a raw text string.
+    """
     match = re.search(r"(\w+,\s\w+\s\d{1,2},\s\d{4})\s*-\s*(\d{1,2}:\d{2}\s*[APMapm]{2})", raw_text)
     if match:
         return match.group(1), match.group(2)
     return raw_text, "Unknown Time"
 
 def download_file(url, file_type=""):
+    """
+    Downloads the video file from the URL and saves it locally.
+    Returns the local file path.
+    """
     filename = f"{file_type}_{os.path.basename(url).split('?')[0]}"
     local_filepath = filename 
 
@@ -99,11 +113,11 @@ def download_file(url, file_type=""):
             for chunk in response.iter_content(chunk_size=8192):
                 f.write(chunk)
 
-        print(f"{file_type.capitalize()} downloaded: {local_filepath}")
+        print(f"Video downloaded: {local_filepath}")
 
     return local_filepath
 
-def transcribe_video(file_path):
+'''def transcribe_video(file_path):
     model = whisper.load_model("small.en")
     result = model.transcribe(file_path)
     transcription_text = result["text"]
@@ -113,9 +127,13 @@ def transcribe_video(file_path):
         transcript_file.write(transcription_text)
 
     print(f"Transcription saved: {transcription_filename}")
-    return transcription_filename
+    return transcription_filename'''
 
 def process_links_by_indices(indices):
+    """
+    Processes meeting links by index.
+    Downloads the videos and stores their metadata.
+    """
     meetings = get_all_links()
     metadata_list = []
 
@@ -131,19 +149,21 @@ def process_links_by_indices(indices):
             "title": meeting["title"],
             "date": meeting["date"],
             "time": meeting["time"],
-            "video_page": meeting.get("video_page", "N/A"),
-            "video": None,
-            "agenda": None,
-            "minutes": None
+            "watch_link": meeting.get("watch_link", "N/A"),
+            "mp4_link": None,
+            "YT_link": None,
+            "State": None
+            #"agenda": None,
+            #"minutes": None
         }
 
-        if "video" in meeting:
-            metadata["video"] = download_file(meeting["video"], file_type="video")
-            transcribe_video(metadata["video"])
+        if "mp4_link" in meeting:
+            metadata["mp4_link"] = download_file(meeting["mp4_link"], file_type="mp4_link")
+            #transcribe_video(metadata["mp4_link"])
         else:
             print("No video found.")
 
-        if "agenda" in meeting:
+        '''if "agenda" in meeting:
             metadata["agenda"] = download_file(meeting["agenda"], file_type="agenda")
         else:
             print("No agenda found.")
@@ -151,7 +171,7 @@ def process_links_by_indices(indices):
         if "minutes" in meeting:
             metadata["minutes"] = download_file(meeting["minutes"], file_type="minutes")
         else:
-            print("No minutes found.")
+            print("No minutes found.")'''
 
         metadata_list.append(metadata)
 
@@ -247,11 +267,6 @@ def initialize_upload(youtube, video_file, title, description, privacyStatus="pu
         media_body=MediaFileUpload(video_file, chunksize=-1, resumable=True)
     )
 
-    video_id = resumable_upload(insert_request) 
-    video_url = f"https://www.youtube.com/watch?v={video_id}"  
-
-    return video_url 
-
     insert_request = youtube.videos().insert(
         part=",".join(body.keys()),
         body=body,
@@ -318,32 +333,31 @@ def resumable_upload(insert_request):
             time.sleep(sleep_seconds)
 
 if __name__ == '__main__':
-    indices_to_process = [2, 4] 
+    indices_to_process = [2, 4]  # Indices of meetings to process
 
     metadata_list = process_links_by_indices(indices_to_process)
     youtube = get_authenticated_service()
-    uploaded_videos = []
 
+    # Iterate through each processed meeting's metadata
     for metadata in metadata_list:
-        if metadata and metadata["video"]:
-            video_file = metadata["video"]
+        # Ensure the metadata is valid
+        if metadata and metadata["mp4_link"]:
+            video_file = metadata["mp4_link"]
             title = metadata["title"]
             date = metadata["date"]
-            video_page = metadata["video_page"]
-            description = f"Recorded on {date}.\n\nWatch the original video on the New Orleans City Council website here: {video_page}"
+            watch_link = metadata["watch_link"]
 
-            try:
-                video_url = initialize_upload(youtube, video_file, title, description)
-                uploaded_videos.append({
-                    "title": title,
-                    "date": date,
-                    "youtube_url": video_url
-                })
-                print(f"Uploaded: {video_url}")
-            except HttpError as e:
-                print(f"Upload failed for {title}: {e}")
+            # Video description for YouTube upload
+            description = f"Recorded on {date}.\n\nWatch the original video on the New Orleans City Council website here: {watch_link}"
 
-    print("\nAll Uploaded Videos:")
-    for video in uploaded_videos:
-        print(f"{video['title']} ({video['date']}): {video['youtube_url']}")
+        try:
+            print(f"Uploading {video_file} to YouTube...") 
+            initialize_upload(youtube, video_file, title, description)  
+            print(f"Uploaded: {title}")
+        except HttpError as e:
+            print(f"Upload failed for {title}: {e}")
+
+# update status as uploaded to YT
+#video_id = resumable_upload(insert_request) 
+#video_url = f"https://www.youtube.com/watch?v={video_id}"  
 

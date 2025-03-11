@@ -59,8 +59,8 @@ def get_all_links():
                     onclick_text = a["onclick"]
                     match = re.search(r"window\.open\('([^']+)'", onclick_text)
                     if match:
-                        video_page_url = "https:" + match.group(1)  
-                        meeting_data["video_page"] = video_page_url
+                        url_watch = "https:" + match.group(1)  
+                        meeting_data["watch_link"] = url_watch
     
                 if href.startswith("//"):
                     href = "https:" + href

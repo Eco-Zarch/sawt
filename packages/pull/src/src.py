@@ -1,27 +1,17 @@
 import json
+import sys
 from youtube_transcript_api import YouTubeTranscriptApi
 
-video_data = [
-     ['https://www.youtube.com/watch?v=_MrtV0S83Xk', 'Quality of Life Committee Meeting', '1/22/2024'] ]
-   # ['https://www.youtube.com/watch?v=6f_SNqcisq8', 'City Council Meeting 1/9/2025', '1/9/2025'] ]
 
-'''['https://www.youtube.com/watch?v=j3wYgcTct2E', 'City Council Meeting 11/16/2023', '11/16/2023'],
-    ['https://www.youtube.com/watch?v=kbkCH8CLCws', 'City Council Meeting 12/1/2023', '12/1/2023'],
-    ['https://www.youtube.com/watch?v=HB2HEqcf_rc', 'City Council Meeting 12/14/2023', '12/14/2023'],
-    ['https://www.youtube.com/watch?v=_xvqfFhZEaw', 'City Council Meeting 12/14/2023', '12/14/2023'],
-    ['https://www.youtube.com/watch?v=no7WCBwIXTk', 'City Council Meeting 1/4/2024', '1/4/2024'],
-    ['https://www.youtube.com/watch?v=XykfGH6ywHk', 'City Council Meeting 1/18/2024', '1/18/2024'],
-    ['https://www.youtube.com/watch?v=mDpOsEnGH8A', 'City Council Meeting 1/18/2024 pt2', '1/18/2024 pt2'],
-    ['https://www.youtube.com/watch?v=BPVdYzbyaG0', 'City Council Meeting 1/18/2024', '1/18/2024'],
-    ['https://www.youtube.com/watch?v=cuMo0btkCc0', 'City Council Meeting 2/1/2024', '2/1/2024'],
-    ['https://www.youtube.com/watch?v=7RDZI3B6RcY', 'City Council Meeting 2/22/2024', '2/22/2024'],
-    ['https://www.youtube.com/watch?v=favibGZ_ksY', 'City Council Meeting 3/7/2024', '3/7/2024'],
-    ['https://www.youtube.com/watch?v=kDUWcHJHE-U', 'City Council Meeting 3/21/2024', '3/21/2024'],
-    ['https://www.youtube.com/watch?v=5ZOofdp8XH8', 'City Council Meeting 4/4/2024', '4/4/2024'],
-    ['https://www.youtube.com/watch?v=FF8FfduEA1Q', 'City Council Meeting 4/18/2024', '4/18/2024'],
-    ['https://www.youtube.com/watch?v=yeJuIsl8od0', 'City Council Meeting 5/2/2024', '5/2/2024'],
-    ['https://www.youtube.com/watch?v=Q2ocfAFWgd0', 'City Council Meeting 6/6/2024', '6/6/2024'],
-    '''
+if len(sys.argv) > 1:
+    video_data = json.loads(sys.argv[1])  # Convert JSON string to a list
+else:
+    video_data = []
+
+if len(sys.argv) > 2:
+    transcript_Path = sys.argv[2]  # Convert JSON string to a list
+else:
+    transcript_Path = ""
 
 
 all_segments = []
@@ -76,7 +66,7 @@ for video_url, video_title, publish_date in video_data:
     all_segments.extend(segments)
 
 output = {'messages': all_segments}
-with open('packages/backend/src/json_test_directory/test_transcript_1__22_2024_.json', 'w') as f:
+with open(transcript_Path, 'w') as f:
     json.dump(output, f, indent=2) 
 '''
 output = {'messages': all_segments}

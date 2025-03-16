@@ -23,321 +23,336 @@ import re
 import ssl
 
 
+print("scraper loaded")
 # Create dataframe
 #LOG_FILE = "city_council_video_status_log.json"
 #COLUMNS = []
 
 
+def run_scraper_and_YT(videos_to_process):
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.abspath(os.path.join(current_dir, ".."))
+    webscraper_dir = os.path.join(project_root, "webscraper")
+    print(project_root)
 
 
-ssl._create_default_https_context = ssl._create_unverified_context
+    ssl._create_default_https_context = ssl._create_unverified_context
 
-URL = "https://cityofno.granicus.com/ViewPublisher.php?view_id=42" #link to city council website where meetings are posted daily
+    URL = "https://cityofno.granicus.com/ViewPublisher.php?view_id=42" #link to city council website where meetings are posted daily
 
 
-# Scraper code 
+    # Scraper code 
 
-def get_all_links():
-    """
-    Scrapes the webpage to grab the metadata associated with the video links.
-    Returns a list of dictionaries containing the metadata.
-    """
-    response = requests.get(URL)
-    response.raise_for_status()
+    def get_all_links():
+        """
+        Scrapes the webpage to grab the metadata associated with the video links.
+        Returns a list of dictionaries containing the metadata.
+        """
+        response = requests.get(URL)
+        response.raise_for_status()
 
-    soup = BeautifulSoup(response.text, "html.parser")
-
-    meetings = []
-    rows = soup.find_all("tr", class_="listingRow")
-
-    for row in rows:
-        meeting_data = {}
-        
-        # Get title and date/time from webpage
-        columns = row.find_all("td", class_="listItem")
-
-        if len(columns) >= 2:
-            meeting_data["title"] = columns[0].get_text(strip=True)
-
-            raw_date_time = columns[1].get_text(strip=True)
-            meeting_data["date"], meeting_data["time"] = get_date_time(raw_date_time)
-            
-            # Get both mp4 link and watch page link 
-            for a in row.find_all("a", href=True):
-                href = a["href"].strip()
-
-                if href == "javascript:void(0);" and "onclick" in a.attrs:
-                    onclick_text = a["onclick"]
-                    match = re.search(r"window\.open\('([^']+)'", onclick_text)
-                    if match:
-                        url_watch = "https:" + match.group(1)  
-                        meeting_data["watch_link"] = url_watch
-    
-                if href.startswith("//"):
-                    href = "https:" + href
-                if ".mp4" in href:
-                    meeting_data["mp4_link"] = href
-                #elif "AgendaViewer.php" in href:
-                    #meeting_data["agenda"] = href
-                #elif "MinutesViewer.php" in href:
-                    #meeting_data["minutes"] = href
-
-            if "mp4_link" in meeting_data:
-                meetings.append(meeting_data)
-
-    return meetings
-    
-
-def get_date_time(raw_text):
-    """
-    Gets and returns the date and time from a raw text string.
-    """
-    match = re.search(r"(\w+,\s\w+\s\d{1,2},\s\d{4})\s*-\s*(\d{1,2}:\d{2}\s*[APMapm]{2})", raw_text)
-    if match:
-        return match.group(1), match.group(2)
-    return raw_text, "Unknown Time"
-
-def download_file(url, file_type=""):
-    """
-    Downloads the video file from the URL and saves it locally.
-    Returns the local file path.
-    """
-    filename = f"{file_type}_{os.path.basename(url).split('?')[0]}"
-    local_filepath = filename 
-
-    response = requests.get(url, stream=True)
-    response.raise_for_status()
-
-    if "text/html" in response.headers.get("Content-Type", ""):
         soup = BeautifulSoup(response.text, "html.parser")
-        for script_or_style in soup(["script", "style"]):
-            script_or_style.decompose()
 
-        clean_text = "\n".join(line.strip() for line in soup.get_text().splitlines() if line.strip())
+        meetings = []
+        rows = soup.find_all("tr", class_="listingRow")
 
-        with open(local_filepath, "w", encoding="utf-8") as f:
-            f.write(clean_text)
+        for row in rows:
+            meeting_data = {}
+            
+            # Get title and date/time from webpage
+            columns = row.find_all("td", class_="listItem")
 
-        print(f"{file_type.capitalize()} saved as text: {local_filepath}")
-    else:
-        with open(local_filepath, "wb") as f:
-            for chunk in response.iter_content(chunk_size=8192):
-                f.write(chunk)
+            if len(columns) >= 2:
+                meeting_data["title"] = columns[0].get_text(strip=True)
 
-        print(f"Video downloaded: {local_filepath}")
+                raw_date_time = columns[1].get_text(strip=True)
+                meeting_data["date"], meeting_data["time"] = get_date_time(raw_date_time)
+                
+                # Get both mp4 link and watch page link 
+                for a in row.find_all("a", href=True):
+                    href = a["href"].strip()
 
-    return local_filepath
+                    if href == "javascript:void(0);" and "onclick" in a.attrs:
+                        onclick_text = a["onclick"]
+                        match = re.search(r"window\.open\('([^']+)'", onclick_text)
+                        if match:
+                            url_watch = "https:" + match.group(1)  
+                            meeting_data["watch_link"] = url_watch
+        
+                    if href.startswith("//"):
+                        href = "https:" + href
+                    if ".mp4" in href:
+                        meeting_data["mp4_link"] = href
+                    #elif "AgendaViewer.php" in href:
+                        #meeting_data["agenda"] = href
+                    #elif "MinutesViewer.php" in href:
+                        #meeting_data["minutes"] = href
 
-'''def transcribe_video(file_path):
-    model = whisper.load_model("small.en")
-    result = model.transcribe(file_path)
-    transcription_text = result["text"]
+                if "mp4_link" in meeting_data:
+                    meetings.append(meeting_data)
 
-    transcription_filename = f"{os.path.splitext(file_path)[0]}_transcription.txt"
-    with open(transcription_filename, "w", encoding="utf-8") as transcript_file:
-        transcript_file.write(transcription_text)
+        return meetings
+        
 
-    print(f"Transcription saved: {transcription_filename}")
-    return transcription_filename'''
+    def get_date_time(raw_text):
+        """
+        Gets and returns the date and time from a raw text string.
+        """
+        match = re.search(r"(\w+,\s\w+\s\d{1,2},\s\d{4})\s*-\s*(\d{1,2}:\d{2}\s*[APMapm]{2})", raw_text)
+        if match:
+            return match.group(1), match.group(2)
+        return raw_text, "Unknown Time"
 
-def process_links_by_indices(indices):
-    """
-    Processes meeting links by index.
-    Downloads the videos and stores their metadata.
-    """
-    meetings = get_all_links()
-    metadata_list = []
+    def download_file(url, file_type=""):
+        """
+        Downloads the video file from the URL and saves it locally.
+        Returns the local file path.
+        """
+       # current_dir = os.path.dirname(os.path.abspath(__file__))
+       # project_root = os.path.abspath(os.path.join(current_dir, ".."))
+        sys.path.append(project_root)
+        save_download = os.path.join(project_root, "run_pipeline", "downloaded_videos")
 
-    for index in indices:
-        if index >= len(meetings):
-            print(f"No meeting found at index {index}")
-            continue
+        filename = f"{file_type}_{os.path.basename(url).split('?')[0]}"
+        local_filepath = os.path.join(save_download, filename)
 
-        meeting = meetings[index]
-        print(f"\nProcessing meeting: {meeting['title']} on {meeting['date']} at {meeting['time']}")
+        response = requests.get(url, stream=True)
+        response.raise_for_status()
 
-        metadata = {
-            "meeting_id": meeting["mp4_link"],
-            "title": meeting["title"],
-            "date": meeting["date"],
-            "time": meeting["time"],
-            "watch_link": meeting.get("watch_link", "N/A"),
-            "mp4_path": None,
-            "YT_link": None,
-            "State": None
-        }
+        if "text/html" in response.headers.get("Content-Type", ""):
+            soup = BeautifulSoup(response.text, "html.parser")
+            for script_or_style in soup(["script", "style"]):
+                script_or_style.decompose()
 
-        if "mp4_link" in meeting:
-            metadata["meeting_id"] = meeting["mp4_link"]
-            metadata["mp4_path"] = download_file(meeting["mp4_link"], file_type="mp4_link")
+            clean_text = "\n".join(line.strip() for line in soup.get_text().splitlines() if line.strip())
+
+            with open(local_filepath, "w", encoding="utf-8") as f:
+                f.write(clean_text)
+
+            print(f"{file_type.capitalize()} saved as text: {local_filepath}")
         else:
-            print("No video found.")
+            with open(local_filepath, "wb") as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    f.write(chunk)
+
+            print(f"Video downloaded: {local_filepath}")
 
 
-        metadata_list.append(metadata)
-    return metadata_list 
+        return local_filepath
+    
+    '''def transcribe_video(file_path):
+        model = whisper.load_model("small.en")
+        result = model.transcribe(file_path)
+        transcription_text = result["text"]
 
-# Youtube upload code 
+        transcription_filename = f"{os.path.splitext(file_path)[0]}_transcription.txt"
+        with open(transcription_filename, "w", encoding="utf-8") as transcript_file:
+            transcript_file.write(transcription_text)
 
-# Explicitly tell the underlying HTTP transport library not to retry, since
-# we are handling retry logic ourselves.
-httplib2.RETRIES = 1
+        print(f"Transcription saved: {transcription_filename}")
+        return transcription_filename'''
 
-# Maximum number of times to retry before giving up.
-MAX_RETRIES = 10
+    def process_links_by_indices(indices):
+        """
+        Processes meeting links by index.
+        Downloads the videos and stores their metadata.
+        """
+        meetings = get_all_links()
+        metadata_list = []
 
-# Always retry when these exceptions are raised.
-RETRIABLE_EXCEPTIONS = (httplib2.HttpLib2Error, IOError, httplib.NotConnected,
-  httplib.IncompleteRead, httplib.ImproperConnectionState,
-  httplib.CannotSendRequest, httplib.CannotSendHeader,
-  httplib.ResponseNotReady, httplib.BadStatusLine)
+        for index in indices:
+            if index >= len(meetings):
+                print(f"No meeting found at index {index}")
+                continue
 
-# Always retry when an apiclient.errors.HttpError with one of these status
-# codes is raised.
-RETRIABLE_STATUS_CODES = [500, 502, 503, 504]
+            meeting = meetings[index]
+            print(f"\nProcessing meeting: {meeting['title']} on {meeting['date']} at {meeting['time']}")
 
-# The CLIENT_SECRETS_FILE variable specifies the name of a file that contains
-# the OAuth 2.0 information for this application, including its client_id and
-# client_secret. You can acquire an OAuth 2.0 client ID and client secret from
-# the Google API Console at
-# https://console.cloud.google.com/.
-# Please ensure that you have enabled the YouTube Data API for your project.
-# For more information about using OAuth2 to access the YouTube Data API, see:
-#   https://developers.google.com/youtube/v3/guides/authentication
-# For more information about the client_secrets.json file format, see:
-#   https://developers.google.com/api-client-library/python/guide/aaa_client_secrets
-CLIENT_SECRETS_FILE = "client_secret_1091585370962-sdu3p4mqmkkj49f0mun6qdu45p92np1n.apps.googleusercontent.com.json"
+            metadata = {
+                "meeting_id": meeting["mp4_link"],
+                "title": meeting["title"],
+                "date": meeting["date"],
+                "time": meeting["time"],
+                "watch_link": meeting.get("watch_link", "N/A"),
+                "mp4_path": None,
+                "YT_link": None,
+                "State": None
+            }
 
-# This OAuth 2.0 access scope allows an application to upload files to the
-# authenticated user's YouTube channel, but doesn't allow other types of access.
-YOUTUBE_UPLOAD_SCOPE = "https://www.googleapis.com/auth/youtube.upload"
-YOUTUBE_API_SERVICE_NAME = "youtube"
-YOUTUBE_API_VERSION = "v3"
+            if "mp4_link" in meeting:
+                metadata["meeting_id"] = meeting["mp4_link"]
+                metadata["mp4_path"] = download_file(meeting["mp4_link"], file_type="mp4_link")
+            else:
+                print("No video found.")
 
-# This variable defines a message to display if the CLIENT_SECRETS_FILE is
-# missing.
-MISSING_CLIENT_SECRETS_MESSAGE = """
-WARNING: Please configure OAuth 2.0
 
-To make this sample run you will need to populate the client_secrets.json file
-found at:
+            metadata_list.append(metadata)
+        return metadata_list 
 
-   %s
+    # Youtube upload code 
 
-with information from the API Console
-https://console.cloud.google.com/
+    # Explicitly tell the underlying HTTP transport library not to retry, since
+    # we are handling retry logic ourselves.
+    httplib2.RETRIES = 1
 
-For more information about the client_secrets.json file format, please visit:
-https://developers.google.com/api-client-library/python/guide/aaa_client_secrets
-""" % os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                   CLIENT_SECRETS_FILE))
+    # Maximum number of times to retry before giving up.
+    MAX_RETRIES = 10
 
-VALID_PRIVACY_STATUSES = ("public", "private", "unlisted")
+    # Always retry when these exceptions are raised.
+    RETRIABLE_EXCEPTIONS = (httplib2.HttpLib2Error, IOError, httplib.NotConnected,
+    httplib.IncompleteRead, httplib.ImproperConnectionState,
+    httplib.CannotSendRequest, httplib.CannotSendHeader,
+    httplib.ResponseNotReady, httplib.BadStatusLine)
 
-def get_authenticated_service():
-    flow = flow_from_clientsecrets(
-        CLIENT_SECRETS_FILE,
-        scope=YOUTUBE_UPLOAD_SCOPE,
-        message=MISSING_CLIENT_SECRETS_MESSAGE
-    )
+    # Always retry when an apiclient.errors.HttpError with one of these status
+    # codes is raised.
+    RETRIABLE_STATUS_CODES = [500, 502, 503, 504]
 
-    storage = Storage("youtube-oauth2.json")
-    credentials = storage.get()
+    # The CLIENT_SECRETS_FILE variable specifies the name of a file that contains
+    # the OAuth 2.0 information for this application, including its client_id and
+    # client_secret. You can acquire an OAuth 2.0 client ID and client secret from
+    # the Google API Console at
+    # https://console.cloud.google.com/.
+    # Please ensure that you have enabled the YouTube Data API for your project.
+    # For more information about using OAuth2 to access the YouTube Data API, see:
+    #   https://developers.google.com/youtube/v3/guides/authentication
+    # For more information about the client_secrets.json file format, see:
+    #   https://developers.google.com/api-client-library/python/guide/aaa_client_secrets
+    CLIENT_SECRETS_FILE = "client_secret_1091585370962-sdu3p4mqmkkj49f0mun6qdu45p92np1n.apps.googleusercontent.com.json" #make file in github secrets
 
-    if credentials is None or credentials.invalid:
-        credentials = run_flow(flow, storage)
+    # This OAuth 2.0 access scope allows an application to upload files to the
+    # authenticated user's YouTube channel, but doesn't allow other types of access.
+    YOUTUBE_UPLOAD_SCOPE = "https://www.googleapis.com/auth/youtube.upload"
+    YOUTUBE_API_SERVICE_NAME = "youtube"
+    YOUTUBE_API_VERSION = "v3"
 
-    return build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION,
-                 http=credentials.authorize(httplib2.Http()))
+    # This variable defines a message to display if the CLIENT_SECRETS_FILE is
+    # missing.
+    MISSING_CLIENT_SECRETS_MESSAGE = """
+    WARNING: Please configure OAuth 2.0
 
-def initialize_upload(youtube, video_file, title, description, privacyStatus="public"):
-    body = dict(
-        snippet=dict(
-            title=title,
-            description=description
-        ),
-        status=dict(
-            privacyStatus=privacyStatus
+    To make this sample run you will need to populate the client_secrets.json file
+    found at:
+
+    %s
+
+    with information from the API Console
+    https://console.cloud.google.com/
+
+    For more information about the client_secrets.json file format, please visit:
+    https://developers.google.com/api-client-library/python/guide/aaa_client_secrets
+    """ % os.path.abspath(os.path.join(project_root, "webscraper", CLIENT_SECRETS_FILE))
+    #os.path.abspath(os.path.join(project_root, "webscraper", CLIENT_SECRETS_FILE))
+    
+    VALID_PRIVACY_STATUSES = ("public", "private", "unlisted")
+
+    def get_authenticated_service():
+        flow = flow_from_clientsecrets(
+            CLIENT_SECRETS_FILE,
+            scope=YOUTUBE_UPLOAD_SCOPE,
+            message=MISSING_CLIENT_SECRETS_MESSAGE
         )
-    )
 
-    insert_request = youtube.videos().insert(
-        part="snippet,status",
-        body=body,
-        media_body=MediaFileUpload(video_file, chunksize=-1, resumable=True)
-    )
+        storage = Storage("youtube-oauth2.json")
+        credentials = storage.get()
 
-    insert_request = youtube.videos().insert(
-        part=",".join(body.keys()),
-        body=body,
-        media_body=MediaFileUpload(video_file, chunksize=-1, resumable=True)
-    )
+        if credentials is None or credentials.invalid:
+            credentials = run_flow(flow, storage)
 
-    resumable_upload(insert_request)
+        return build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION,
+                    http=credentials.authorize(httplib2.Http()))
+
+    def initialize_upload(youtube, video_file, title, description, privacyStatus="public"):
+        body = dict(
+            snippet=dict(
+                title=title,
+                description=description
+            ),
+            status=dict(
+                privacyStatus=privacyStatus
+            )
+        )
+
+        insert_request = youtube.videos().insert(
+            part="snippet,status",
+            body=body,
+            media_body=MediaFileUpload(video_file, chunksize=-1, resumable=True)
+        )
+
+        insert_request = youtube.videos().insert(
+            part=",".join(body.keys()),
+            body=body,
+            media_body=MediaFileUpload(video_file, chunksize=-1, resumable=True)
+        )
+
+        resumable_upload(insert_request)
 
 
-  # Call the API's videos.insert method to create and upload the video.
-  #insert_request = youtube.videos().insert(
-    #part=",".join(body.keys()),
-    #body=body,
-    # The chunksize parameter specifies the size of each chunk of data, in
-    # bytes, that will be uploaded at a time. Set a higher value for
-    # reliable connections as fewer chunks lead to faster uploads. Set a lower
-    # value for better recovery on less reliable connections.
-    #
-    # Setting "chunksize" equal to -1 in the code below means that the entire
-    # file will be uploaded in a single HTTP request. (If the upload fails,
-    # it will still be retried where it left off.) This is usually a best
-    # practice, but if you're using Python older than 2.6 or if you're
-    # running on App Engine, you should set the chunksize to something like
-    # 1024 * 1024 (1 megabyte).
-    #media_body=MediaFileUpload(options.file, chunksize=-1, resumable=True)
-  #)
+    # Call the API's videos.insert method to create and upload the video.
+    #insert_request = youtube.videos().insert(
+        #part=",".join(body.keys()),
+        #body=body,
+        # The chunksize parameter specifies the size of each chunk of data, in
+        # bytes, that will be uploaded at a time. Set a higher value for
+        # reliable connections as fewer chunks lead to faster uploads. Set a lower
+        # value for better recovery on less reliable connections.
+        #
+        # Setting "chunksize" equal to -1 in the code below means that the entire
+        # file will be uploaded in a single HTTP request. (If the upload fails,
+        # it will still be retried where it left off.) This is usually a best
+        # practice, but if you're using Python older than 2.6 or if you're
+        # running on App Engine, you should set the chunksize to something like
+        # 1024 * 1024 (1 megabyte).
+        #media_body=MediaFileUpload(options.file, chunksize=-1, resumable=True)
+    #)
 
-  #resumable_upload(insert_request)
+    #resumable_upload(insert_request)
 
-# This method implements an exponential backoff strategy to resume a
-# failed upload.
-def resumable_upload(insert_request):
-    response = None
-    error = None
-    retry = 0
+    # This method implements an exponential backoff strategy to resume a
+    # failed upload.
+    def resumable_upload(insert_request):
+        response = None
+        error = None
+        retry = 0
 
-    while response is None:
-        try:
-            print("Uploading file...")
-            status, response = insert_request.next_chunk()
-            if response is not None and 'id' in response:
-                video_id = response['id']
-                print(f"Video uploaded successfully: https://www.youtube.com/watch?v={video_id}")
-                global meeting
-                metadata["YT_link"] = f"https://www.youtube.com/watch?v={video_id}"
-                return video_id  # Return video ID after upload
-            else:
-                exit("Upload failed with unexpected response: %s" % response)
-        except HttpError as e:
-            if e.resp.status in RETRIABLE_STATUS_CODES:
-                error = f"A retriable HTTP error {e.resp.status} occurred:\n{e.content}"
-            else:
-                raise
-        except RETRIABLE_EXCEPTIONS as e:
-            error = f"A retriable error occurred: {e}"
+        while response is None:
+            try:
+                print("Uploading file...")
+                status, response = insert_request.next_chunk()
+                if response is not None and 'id' in response:
+                    video_id = response['id']
+                    print(f"Video uploaded successfully: https://www.youtube.com/watch?v={video_id}")
+                    global meeting
+                    metadata["YT_link"] = f"https://www.youtube.com/watch?v={video_id}" #adds link to metadata list
+                    return video_id  # Return video ID after upload
+                else:
+                    exit("Upload failed with unexpected response: %s" % response)
+            except HttpError as e:
+                if e.resp.status in RETRIABLE_STATUS_CODES:
+                    error = f"A retriable HTTP error {e.resp.status} occurred:\n{e.content}"
+                else:
+                    raise
+            except RETRIABLE_EXCEPTIONS as e:
+                error = f"A retriable error occurred: {e}"
 
-        if error is not None:
-            print(error)
-            retry += 1
-            if retry > MAX_RETRIES:
-                exit("No longer attempting to retry.")
+            if error is not None:
+                print(error)
+                retry += 1
+                if retry > MAX_RETRIES:
+                    exit("No longer attempting to retry.")
 
-            max_sleep = 2 ** retry
-            sleep_seconds = random.random() * max_sleep
-            print(f"Sleeping {sleep_seconds} seconds and then retrying...")
-            time.sleep(sleep_seconds)
+                max_sleep = 2 ** retry
+                sleep_seconds = random.random() * max_sleep
+                print(f"Sleeping {sleep_seconds} seconds and then retrying...")
+                time.sleep(sleep_seconds)
 
-if __name__ == '__main__':
-    indices_to_process = [1]  # Indices of meetings to process
+    #if __name__ == '__main__':
+    indices_to_process = list(range(videos_to_process))  # Indices of meetings to process
 
     metadata_list = process_links_by_indices(indices_to_process)
+
+
+    os.chdir(webscraper_dir)
     youtube = get_authenticated_service()
 
     # Iterate through each processed meeting's metadata
@@ -363,8 +378,8 @@ if __name__ == '__main__':
 
 
 
-
 # update status as uploaded to YT
 #video_id = resumable_upload(insert_request) 
 #video_url = f"https://www.youtube.com/watch?v={video_id}"  
 
+#run_scraper_and_YT()

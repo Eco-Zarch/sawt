@@ -1,6 +1,4 @@
 [core]
     remote = myremote
 ['remote "myremote"']
-    url = gs://faiss
-    projectname = the-great-inquirer
-
+    url = gs://example_faiss_bucket

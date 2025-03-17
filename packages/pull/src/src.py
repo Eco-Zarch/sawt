@@ -4,12 +4,15 @@ from youtube_transcript_api import YouTubeTranscriptApi
 
 
 if len(sys.argv) > 1:
-    video_data = json.loads(sys.argv[1])  # Convert JSON string to a list
+    video_data = json.loads(sys.argv[1])  # retrieves video url list (will be in main)
+  #  print("video data src: ", video_data) #check
 else:
     video_data = []
 
 if len(sys.argv) > 2:
-    transcript_Path = sys.argv[2]  # Convert JSON string to a list
+    transcript_Path = sys.argv[2]  # retrieves provided transcript path (will be in main)
+                # should be sawt/packages/backend/src/json_test_directory/filename.json
+    #print("transcrit path src: ", transcript_Path) #check
 else:
     transcript_Path = ""
 

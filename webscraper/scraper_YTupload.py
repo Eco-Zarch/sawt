@@ -8,7 +8,7 @@ import httplib2
 import random
 import sys
 import time
-import pandas
+import pandas as pd
 
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
@@ -23,19 +23,15 @@ import re
 import ssl
 
 
-print("scraper loaded")
-# Create dataframe
-#LOG_FILE = "city_council_video_status_log.json"
-#COLUMNS = []
+print("scraper_YTupload.py Loaded Correctly")
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.abspath(os.path.join(current_dir, ".."))
 
 
-def run_scraper_and_YT(videos_to_process):
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    project_root = os.path.abspath(os.path.join(current_dir, ".."))
+def run_scraper_and_YT(videos_to_process, df, LOG_FILE):
+    #df = pd.read_json(LOG_FILE)
+
     webscraper_dir = os.path.join(project_root, "webscraper")
-    print(project_root)
-
-
     ssl._create_default_https_context = ssl._create_unverified_context
 
     URL = "https://cityofno.granicus.com/ViewPublisher.php?view_id=42" #link to city council website where meetings are posted daily
@@ -43,9 +39,10 @@ def run_scraper_and_YT(videos_to_process):
 
     # Scraper code 
 
-    def get_all_links():
+    def get_all_links(rows_to_scrape, df):
+
         """
-        Scrapes the webpage to grab the metadata associated with the video links.
+        Scrapes the webpage to grab the metadata associated with the most recent 10 video links.
         Returns a list of dictionaries containing the metadata.
         """
         response = requests.get(URL)
@@ -54,8 +51,17 @@ def run_scraper_and_YT(videos_to_process):
         soup = BeautifulSoup(response.text, "html.parser")
 
         meetings = []
-        rows = soup.find_all("tr", class_="listingRow")
 
+       
+        archive_div = soup.find("div", class_="archive") 
+        if archive_div:
+            tbody = archive_div.find("tbody")
+            if tbody:
+                rows = tbody.find_all("tr", class_="listingRow", limit=rows_to_scrape)
+     
+       # print(f"✅ Found {len(rows)} recent rows.")
+
+    
         for row in rows:
             meeting_data = {}
             
@@ -66,8 +72,10 @@ def run_scraper_and_YT(videos_to_process):
                 meeting_data["title"] = columns[0].get_text(strip=True)
 
                 raw_date_time = columns[1].get_text(strip=True)
-                meeting_data["date"], meeting_data["time"] = get_date_time(raw_date_time)
-                
+                meeting_data["date"], meeting_data["time"] = get_date_time(raw_date_time) #this is being weird, it's changing the date after running it again
+
+                meeting_data["meeting_id"] = None
+
                 # Get both mp4 link and watch page link 
                 for a in row.find_all("a", href=True):
                     href = a["href"].strip()
@@ -81,17 +89,27 @@ def run_scraper_and_YT(videos_to_process):
         
                     if href.startswith("//"):
                         href = "https:" + href
-                    if ".mp4" in href:
-                        meeting_data["mp4_link"] = href
-                    #elif "AgendaViewer.php" in href:
-                        #meeting_data["agenda"] = href
-                    #elif "MinutesViewer.php" in href:
-                        #meeting_data["minutes"] = href
-
-                if "mp4_link" in meeting_data:
+                    if ".mp4" in href:                       
+                        meeting_id = href
+                        if meeting_id in df["meeting_id"].values:
+                            print(f"Meeting {meeting_id} already in log")
+                            meeting_data["meetin_id"] = None
+                        else:
+                            meeting_data["meeting_id"] = meeting_id
+                            meeting_data["state"] = 0
+                    
+                if meeting_data["meeting_id"] != None:
                     meetings.append(meeting_data)
+                    #print("New Meeting Added: ",meetings)
+        #print("Meetings: ", meetings)
 
-        return meetings
+        if len(meetings) != 0:
+            print("adding to DF")
+            df = pd.concat([df, pd.DataFrame(meetings)])
+            #df.to_json(LOG_FILE, orient="records", indent=4)
+        #df["date"] = df["date"].astype(str)
+        df.to_json(LOG_FILE, orient="records", indent=4)
+        return meetings, df
         
 
     def get_date_time(raw_text):
@@ -103,13 +121,13 @@ def run_scraper_and_YT(videos_to_process):
             return match.group(1), match.group(2)
         return raw_text, "Unknown Time"
 
+    
     def download_file(url, file_type=""):
         """
         Downloads the video file from the URL and saves it locally.
         Returns the local file path.
         """
-       # current_dir = os.path.dirname(os.path.abspath(__file__))
-       # project_root = os.path.abspath(os.path.join(current_dir, ".."))
+
         sys.path.append(project_root)
         save_download = os.path.join(project_root, "run_pipeline", "downloaded_videos")
         os.makedirs(save_download, exist_ok=True)
@@ -136,29 +154,23 @@ def run_scraper_and_YT(videos_to_process):
                 for chunk in response.iter_content(chunk_size=8192):
                     f.write(chunk)
 
+
             print(f"Video downloaded: {local_filepath}")
 
 
         return local_filepath
     
-    '''def transcribe_video(file_path):
-        model = whisper.load_model("small.en")
-        result = model.transcribe(file_path)
-        transcription_text = result["text"]
 
-        transcription_filename = f"{os.path.splitext(file_path)[0]}_transcription.txt"
-        with open(transcription_filename, "w", encoding="utf-8") as transcript_file:
-            transcript_file.write(transcription_text)
-
-        print(f"Transcription saved: {transcription_filename}")
-        return transcription_filename'''
-
-    def process_links_by_indices(indices):
+    def process_links_by_indices(indices, rows, df):
         """
         Processes meeting links by index.
         Downloads the videos and stores their metadata.
         """
-        meetings = get_all_links()
+        meetings, df = get_all_links(rows, df) #return list of dictionarys
+        #print("DataFrame before filtering:\n", df)
+        #print("Columns in DataFrame:", df.columns)
+        meetings = df[df['state'] == 0].to_dict(orient='records')
+        print("Meetings list after get_all_links set at 0: ", meetings)
         metadata_list = []
 
         for index in indices:
@@ -167,10 +179,12 @@ def run_scraper_and_YT(videos_to_process):
                 continue
 
             meeting = meetings[index]
-            print(f"\nProcessing meeting: {meeting['title']} on {meeting['date']} at {meeting['time']}")
+            #print("Print Meeting: ",meeting)
+            print(f"\nDownloading meeting: {meeting['title']} on {meeting['date']} at {meeting['time']}")
+
 
             metadata = {
-                "meeting_id": meeting["mp4_link"],
+                "meeting_id": meeting["meeting_id"],
                 "title": meeting["title"],
                 "date": meeting["date"],
                 "time": meeting["time"],
@@ -180,15 +194,20 @@ def run_scraper_and_YT(videos_to_process):
                 "State": None
             }
 
-            if "mp4_link" in meeting:
-                metadata["meeting_id"] = meeting["mp4_link"]
-                metadata["mp4_path"] = download_file(meeting["mp4_link"], file_type="mp4_link")
+            if "meeting_id" in meeting:
+                metadata["meeting_id"] = meeting["meeting_id"]
+                metadata["mp4_path"] = download_file(meeting["meeting_id"], file_type="mp4_link")
+                df.loc[df["meeting_id"] == metadata["meeting_id"], "mp4_path"] = metadata["mp4_path"] 
+                df.loc[df["meeting_id"] == metadata["meeting_id"],"state"] = 1 # FIX ME: Change to check to make sure path is in Dataframe
+                #df.to_json(LOG_FILE, orient="records", indent=4) #save updates
+
             else:
                 print("No video found.")
 
 
             metadata_list.append(metadata)
-        return metadata_list 
+        df.to_json(LOG_FILE, orient="records", indent=4)
+        return metadata_list, df
 
     # Youtube upload code 
 
@@ -247,7 +266,7 @@ def run_scraper_and_YT(videos_to_process):
     
     VALID_PRIVACY_STATUSES = ("public", "private", "unlisted")
 
-    def get_authenticated_service():
+    def get_authenticated_service(df):
         flow = flow_from_clientsecrets(
             CLIENT_SECRETS_FILE,
             scope=YOUTUBE_UPLOAD_SCOPE,
@@ -260,10 +279,11 @@ def run_scraper_and_YT(videos_to_process):
         if credentials is None or credentials.invalid:
             credentials = run_flow(flow, storage)
 
+        df.to_json(LOG_FILE, orient="records", indent=4)
         return build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION,
-                    http=credentials.authorize(httplib2.Http()))
+                    http=credentials.authorize(httplib2.Http())), df
 
-    def initialize_upload(youtube, video_file, title, description, privacyStatus="public"):
+    def initialize_upload(youtube, video_file, title, description, df, privacyStatus="public"):
         body = dict(
             snippet=dict(
                 title=title,
@@ -286,7 +306,9 @@ def run_scraper_and_YT(videos_to_process):
             media_body=MediaFileUpload(video_file, chunksize=-1, resumable=True)
         )
 
-        resumable_upload(insert_request)
+        video_id, df = resumable_upload(insert_request, df)
+        df.to_json(LOG_FILE, orient="records", indent=4)
+        return video_id, df
 
 
     # Call the API's videos.insert method to create and upload the video.
@@ -311,7 +333,7 @@ def run_scraper_and_YT(videos_to_process):
 
     # This method implements an exponential backoff strategy to resume a
     # failed upload.
-    def resumable_upload(insert_request):
+    def resumable_upload(insert_request, df):
         response = None
         error = None
         retry = 0
@@ -323,9 +345,12 @@ def run_scraper_and_YT(videos_to_process):
                 if response is not None and 'id' in response:
                     video_id = response['id']
                     print(f"Video uploaded successfully: https://www.youtube.com/watch?v={video_id}")
-                    global meeting
+
                     metadata["YT_link"] = f"https://www.youtube.com/watch?v={video_id}" #adds link to metadata list
-                    return video_id  # Return video ID after upload
+                    df.loc[df["meeting_id"] == metadata["meeting_id"], "YT_link"] = metadata["YT_link"]
+                    df.loc[df["meeting_id"] == metadata["meeting_id"], "state"] = 2 # FIX ME: make it check that link is there first
+                    df.to_json(LOG_FILE, orient="records", indent=4)
+                    return video_id, df  # Return video ID after upload
                 else:
                     exit("Upload failed with unexpected response: %s" % response)
             except HttpError as e:
@@ -347,16 +372,27 @@ def run_scraper_and_YT(videos_to_process):
                 print(f"Sleeping {sleep_seconds} seconds and then retrying...")
                 time.sleep(sleep_seconds)
 
+        df.to_json(LOG_FILE, orient="records", indent=4)
+        return " ", df
+
     #if __name__ == '__main__':
-    indices_to_process = list(range(videos_to_process))  # Indices of meetings to process
 
-    metadata_list = process_links_by_indices(indices_to_process)
+    
+    # Where this function starts
 
+    rows_to_scrape = videos_to_process
+    indices_to_process = list(range(videos_to_process))  
+    metadata_list, df = process_links_by_indices(indices_to_process, rows_to_scrape, df)
+    metadata_list = df[df['state'] == 1].to_dict(orient='records')
+    #print("Meta_data list check when state at 1: ", metadata_list)
 
     os.chdir(webscraper_dir)
-    youtube = get_authenticated_service()
+    youtube, df = get_authenticated_service(df)
 
     # Iterate through each processed meeting's metadata
+
+
+
     for metadata in metadata_list:
         # Ensure the metadata is valid
         if metadata and metadata["mp4_path"]:
@@ -366,21 +402,27 @@ def run_scraper_and_YT(videos_to_process):
             watch_link = metadata["watch_link"]
 
             # Video description for YouTube upload
-            description = f"Recorded on {date}.\n\nWatch the original video on the New Orleans City Council website here: {watch_link}"
+            description = f"Recorded on {date}.\n\nWatch the original video on the New Orleans City Council website here: {watch_link}" # FIX ME: Add to dataframe
 
         try:
             print(f"Uploading {video_file} to YouTube...") 
-            initialize_upload(youtube, video_file, title, description)  
+            #print("skip upload for now")
+            video_id, df = initialize_upload(youtube, video_file, title, description, df)  
             print(f"Uploaded: {title}")
-            print(metadata)
+
         except HttpError as e:
             print(f"Upload failed for {title}: {e}")
 
 
-
+    df.to_json(LOG_FILE, orient="records", indent=4)
+    return df
 
 # update status as uploaded to YT
 #video_id = resumable_upload(insert_request) 
 #video_url = f"https://www.youtube.com/watch?v={video_id}"  
 
-#run_scraper_and_YT()
+
+
+#df = load_existing_dataframe()
+#save_dataframe(df)
+#run_scraper_and_YT(1)

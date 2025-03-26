@@ -11,7 +11,6 @@ on:
     branches:
       - "**"
   workflow_dispatch: # Allows manual triggering
-
 jobs:
   run-pipeline:
     runs-on: ubuntu-latest
@@ -32,7 +31,8 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r ../packages/backend/requirements.txt  # Assuming dependencies are here
+          pip install -r ../packages/backend/requirements.txt
+          pip install git+https://github.com/openai/whisper.git
 
       - name: Run pipeline script
         run: |

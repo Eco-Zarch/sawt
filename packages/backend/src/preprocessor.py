@@ -183,14 +183,14 @@ def create_db_from_fc_transcripts(fc_json_directory):
                     f"Content: {new_doc.page_content}\nMetadata: {new_doc.metadata}\n"
                 )
                 all_docs.append(new_doc)
-    logger.info("Finished database from news transcripts...") #change news to fc?
+    logger.info("Finished database from news transcripts...")  # change news to fc?
     return all_docs
 
 
+# test transcript function
 
-#test transcript function
 
-def create_db_from_test_transcripts(test_json_directory): #test
+def create_db_from_test_transcripts(test_json_directory):  # test
     logger.info("Creating database from test transcripts...")
     all_docs = []
     for doc_file in os.listdir(test_json_directory):
@@ -210,16 +210,10 @@ def create_db_from_test_transcripts(test_json_directory): #test
             chunks = text_splitter.split_text(doc.page_content)
             for chunk in chunks:
                 new_doc = Document(page_content=chunk, metadata=doc.metadata)
-                print(
-                    f"Content: {new_doc.page_content}\nMetadata: {new_doc.metadata}\n"
-                )
+                # print(f"Content: {new_doc.page_content}\nMetadata: {new_doc.metadata}\n")
                 all_docs.append(new_doc)
     logger.info("Finished database from test transcripts...")
-    return all_docs  
-
-
-
-
+    return all_docs
 
 
 def create_db_from_public_comments(pc_json_directory):
@@ -251,22 +245,22 @@ def create_db_from_public_comments(pc_json_directory):
 
 
 def create_vector_dbs(
-    #fc_json_directory,
-   # cj_json_directory,
-    #doc_directory,
-    #pc_directory,
-   # news_directory,
+    # fc_json_directory,
+    # cj_json_directory,
+    # doc_directory,
+    # pc_directory,
+    # news_directory,
     test_json_directory,
-    in_depth_embeddings
+    in_depth_embeddings,
 ):
     # Create databases from transcripts and documents
-    #fc_video_docs = create_db_from_fc_transcripts(fc_json_directory)
-    #cj_video_docs = create_db_from_cj_transcripts(cj_json_directory)
-    #pdf_docs = create_db_from_minutes_and_agendas(doc_directory)
-    #pc_docs = create_db_from_public_comments(pc_directory)
-    #news_docs = create_db_from_news_transcripts(news_directory)
+    # fc_video_docs = create_db_from_fc_transcripts(fc_json_directory)
+    # cj_video_docs = create_db_from_cj_transcripts(cj_json_directory)
+    # pdf_docs = create_db_from_minutes_and_agendas(doc_directory)
+    # pc_docs = create_db_from_public_comments(pc_directory)
+    # news_docs = create_db_from_news_transcripts(news_directory)
     test_video_docs = create_db_from_test_transcripts(test_json_directory)
- 
+
     # Function to create, save, and copy FAISS index
     def create_save_and_copy_faiss(docs, embeddings, doc_type):
         # Create FAISS index
@@ -279,27 +273,29 @@ def create_vector_dbs(
         db.save_local(local_save_dir)
         logger.info(f"Local FAISS index for {doc_type} saved to {local_save_dir}")
 
-        #put this back later
+        # put this back later
 
         # Copy to Google Cloud directory
-      #  cloud_dir = dir.parent.parent.joinpath(
-       #     f"googlecloud/functions/getanswer/cache/faiss_index_in_depth_{doc_type}"
-      #  )
-      #  shutil.copytree(local_save_dir, cloud_dir, dirs_exist_ok=True)
-       # logger.info(
-       #     f"FAISS index for {doc_type} copied to Google Cloud directory: {cloud_dir}"
-     #   )
+        #  cloud_dir = dir.parent.parent.joinpath(
+        #     f"googlecloud/functions/getanswer/cache/faiss_index_in_depth_{doc_type}"
+        #  )
+        #  shutil.copytree(local_save_dir, cloud_dir, dirs_exist_ok=True)
+        # logger.info(
+        #     f"FAISS index for {doc_type} copied to Google Cloud directory: {cloud_dir}"
+        #   )
 
         return db
 
     # Creating, saving, and copying FAISS indices for each document type
-   # faiss_fc = create_save_and_copy_faiss(fc_video_docs, in_depth_embeddings, "fc")
-    #faiss_cj = create_save_and_copy_faiss(cj_video_docs, in_depth_embeddings, "cj")
-   # faiss_pdf = create_save_and_copy_faiss(pdf_docs, in_depth_embeddings, "pdf")
-   # faiss_pc = create_save_and_copy_faiss(pc_docs, in_depth_embeddings, "pc")
-    #faiss_news = create_save_and_copy_faiss(news_docs, in_depth_embeddings, "news")
-    faiss_test = create_save_and_copy_faiss(test_video_docs, in_depth_embeddings, "test")
+    # faiss_fc = create_save_and_copy_faiss(fc_video_docs, in_depth_embeddings, "fc")
+    # faiss_cj = create_save_and_copy_faiss(cj_video_docs, in_depth_embeddings, "cj")
+    # faiss_pdf = create_save_and_copy_faiss(pdf_docs, in_depth_embeddings, "pdf")
+    # faiss_pc = create_save_and_copy_faiss(pc_docs, in_depth_embeddings, "pc")
+    # faiss_news = create_save_and_copy_faiss(news_docs, in_depth_embeddings, "news")
+    faiss_test = create_save_and_copy_faiss(
+        test_video_docs, in_depth_embeddings, "test"
+    )
 
     # Return the FAISS indices
-   # return faiss_fc, faiss_cj, faiss_pdf, faiss_pc, faiss_news
+    # return faiss_fc, faiss_cj, faiss_pdf, faiss_pc, faiss_news
     return faiss_test

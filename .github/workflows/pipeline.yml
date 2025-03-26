@@ -31,8 +31,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r ../packages/backend/requirements.txt
-          pip install git+https://github.com/openai/whisper.git
+          pip install -r ../run_pipeline/requirements.txt
 
       - name: Run pipeline script
         run: |

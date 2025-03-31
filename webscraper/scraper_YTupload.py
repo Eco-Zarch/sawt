@@ -140,7 +140,7 @@ def run_scraper_and_YT(videos_to_process, df, LOG_FILE):
         "Referer": "https://cityofno.granicus.com/",  # adjust as appropriate
             }
 
-        response = requests.get(url, headers, stream=True)
+        response = requests.get(url, headers=headers, stream=True)
         response.raise_for_status()
 
         if "text/html" in response.headers.get("Content-Type", ""):

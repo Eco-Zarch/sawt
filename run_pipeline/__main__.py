@@ -80,7 +80,7 @@ if __name__ == "__main__":
 
     # print(f"video list from main: {video_list}")
 
-    df = get_transcripts(video_list, df, LOG_FILE)
+   # df = get_transcripts(video_list, df, LOG_FILE)
     print(f"Final df: {df}")
 
 

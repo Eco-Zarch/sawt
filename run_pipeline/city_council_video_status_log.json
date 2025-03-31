@@ -30,16 +30,6 @@
         "state":5
     },
     {
-        "meeting_id":"https:\/\/archive-video.granicus.com\/cityofno\/cityofno_7408a3fa-d0f3-4093-8abe-8cb5caaea19f.mp4",
-        "title":"Transportation Committee",
-        "date":"3\/25\/2025",
-        "time":"10:00\u00a0AM",
-        "watch_link":"https:\/\/cityofno.granicus.com\/MediaPlayer.php?view_id=42&clip_id=5076",
-        "mp4_path":"\/Users\/sydneyfeldman\/Desktop\/Capstone\/sawt\/run_pipeline\/downloaded_videos\/mp4_link_cityofno_7408a3fa-d0f3-4093-8abe-8cb5caaea19f.mp4",
-        "YT_link":"https:\/\/www.youtube.com\/watch?v=9v_mwXARzSM",
-        "state":5
-    },
-    {
         "meeting_id":"https:\/\/archive-video.granicus.com\/cityofno\/cityofno_bd501513-59fd-4f9c-9910-a0151c2a5f16.mp4",
         "title":"Community Development Committee",
         "date":"3\/24\/2025",
@@ -67,6 +57,16 @@
         "watch_link":"https:\/\/cityofno.granicus.com\/MediaPlayer.php?view_id=42&clip_id=5074",
         "mp4_path":"\/Users\/sydneyfeldman\/Desktop\/Capstone\/sawt\/run_pipeline\/downloaded_videos\/mp4_link_cityofno_470210ac-a9f1-427f-9d6c-8e935c948d0f.mp4",
         "YT_link":"https:\/\/www.youtube.com\/watch?v=--AFdtgm32A",
+        "state":5
+    },
+    {
+        "meeting_id":"https:\/\/archive-video.granicus.com\/cityofno\/cityofno_620010f2-7534-4800-9943-34957fffb9ba.mp4",
+        "title":"Regular City Council",
+        "date":"Thursday,\u00a0March\u00a027,\u00a02025",
+        "time":"9:43\u00a0AM",
+        "watch_link":"https:\/\/cityofno.granicus.com\/MediaPlayer.php?view_id=42&clip_id=5078",
+        "mp4_path":null,
+        "YT_link":null,
         "state":5
     }
 ]

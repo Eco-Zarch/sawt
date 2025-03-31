@@ -135,7 +135,12 @@ def run_scraper_and_YT(videos_to_process, df, LOG_FILE):
         filename = f"{file_type}_{os.path.basename(url).split('?')[0]}"
         local_filepath = os.path.join(save_download, filename)
 
-        response = requests.get(url, stream=True)
+        headers = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
+        "Referer": "https://cityofno.granicus.com/",  # adjust as appropriate
+            }
+
+        response = requests.get(url, headers, stream=True)
         response.raise_for_status()
 
         if "text/html" in response.headers.get("Content-Type", ""):
@@ -387,7 +392,7 @@ def run_scraper_and_YT(videos_to_process, df, LOG_FILE):
     #print("Meta_data list check when state at 1: ", metadata_list)
 
     os.chdir(webscraper_dir)
-    youtube, df = get_authenticated_service(df)
+    #youtube, df = get_authenticated_service(df)
 
     # Iterate through each processed meeting's metadata
 
@@ -405,10 +410,10 @@ def run_scraper_and_YT(videos_to_process, df, LOG_FILE):
             description = f"Recorded on {date}.\n\nWatch the original video on the New Orleans City Council website here: {watch_link}" # FIX ME: Add to dataframe
 
         try:
-            print(f"Uploading {video_file} to YouTube...") 
-            #print("skip upload for now")
-            video_id, df = initialize_upload(youtube, video_file, title, description, df)  
-            print(f"Uploaded: {title}")
+            #print(f"Uploading {video_file} to YouTube...") 
+            print("skip upload for now")
+            #video_id, df = initialize_upload(youtube, video_file, title, description, df)  
+            #print(f"Uploaded: {title}")
 
         except HttpError as e:
             print(f"Upload failed for {title}: {e}")

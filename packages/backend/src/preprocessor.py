@@ -192,7 +192,7 @@ def create_db_from_fc_transcripts(fc_json_directory):
 
 #test transcript function
 
-def create_db_from_test_transcripts(test_json_directory): #test
+def create_db_from_test_transcripts(test_json_directory): #have this just work for the new files, keep date name, and delete after 
     logger.info("Creating database from test transcripts...")
     all_docs = []
     print( "Print CD:", os.getcwd())
@@ -275,7 +275,8 @@ def create_vector_dbs(
     # Function to create, save, and copy FAISS index
     def create_save_and_copy_faiss(docs, embeddings, doc_type, df, LOG_FILE):
         # Create FAISS index
-        db = FAISS.from_documents(docs, embeddings)
+        db = FAISS.from_documents(docs, embeddings) #### change this to add?
+            # next time you call add documents it will use the same embeddings so you dont have to pass them in again 
 
         cache_dir = dir.joinpath("cache")
 

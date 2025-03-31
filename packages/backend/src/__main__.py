@@ -1,7 +1,9 @@
 import logging
-
+import os
+import sys
 from dotenv import find_dotenv, load_dotenv
-from preprocessor import create_vector_dbs, create_embeddings
+
+from packages.backend.src.preprocessor import create_vector_dbs, create_embeddings
 
 load_dotenv(find_dotenv())
 
@@ -10,7 +12,7 @@ logging.basicConfig(
 )
 
 
-def main():
+def main(df, LOG_FILE):
     '''
     pdf_directory = "minutes_agendas_directory"
     cj_json_directory = "json_cj_directory"
@@ -18,7 +20,9 @@ def main():
     pc_json_directory = "json_public_comment_directory"
     news_json_directory = "news_directory"
     '''
-    test_json_directory = "src/json_test_directory" #test 
+
+    print('In main!')
+    test_json_directory = "packages/backend/src/json_test_directory" #test 
     print(f"Preprocessing videos, agendas, and minutes to generate a cache.")
     general_embeddings, in_depth_embeddings = create_embeddings()
 
@@ -30,9 +34,13 @@ def main():
        # pc_json_directory,
         #news_json_directory,
         test_json_directory,
-        in_depth_embeddings
+        in_depth_embeddings, 
+        df, 
+        LOG_FILE
     )
+    return df
 
 
-if __name__ == "__main__":
-    main()
+#if __name__ == "__main__":
+    #print('In main!')
+    #main(df, LOG_FILE)

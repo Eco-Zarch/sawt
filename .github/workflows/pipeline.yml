@@ -3,12 +3,6 @@ name: Daily Run Pipeline
 on:
   schedule:
     - cron: "0 0 * * *" # Runs daily at midnight UTC
-  pull_request:
-    branches:
-      - "**"
-  push:
-    branches:
-      - "**"
   workflow_dispatch:
 
 jobs:

@@ -274,8 +274,24 @@ def create_vector_dbs(
     # Function to create, save, and copy FAISS index
     def create_save_and_copy_faiss(docs, embeddings, doc_type, df, LOG_FILE):
         # Create FAISS index
-        db = FAISS.from_documents(docs, embeddings)  #### change this to add?
+        #db = FAISS.from_documents(docs, embeddings)  #### change this to add?
         # next time you call add documents it will use the same embeddings so you dont have to pass them in again
+        
+        # TRY THIS 
+        # Path where FAISS index is saved
+        faiss_path = "packages/backend/src/cache/faiss_index_in_depth_test"
+        
+        # Check if a FAISS index already exists at that path
+        if os.path.exists(os.path.join(faiss_path, "index.faiss")):
+            # Load existing FAISS index
+            db = FAISS.load_local(faiss_path, embeddings)   
+            # Add new documents 
+            db.add_documents(docs)                          
+            print("Added new documents to existing FAISS index.")
+        else:
+            # Create a new FAISS vector index using the documents
+            db = FAISS.from_documents(docs, embeddings)     
+            print("Created new FAISS index."),
 
         cache_dir = dir.joinpath("cache")
 

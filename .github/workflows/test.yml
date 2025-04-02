@@ -16,14 +16,17 @@ jobs:
         with:
           python-version: "3.10"
 
-      - name: Install dependencies
+      - name: Install Chrome and Chromedriver
         run: |
           sudo apt update
-          sudo apt install -y chromium-chromedriver
-          python -m pip install --upgrade pip
+          sudo apt install -y chromium-browser chromium-chromedriver
+          sudo ln -s /usr/bin/chromedriver /usr/local/bin/chromedriver
+          sudo ln -s /usr/bin/chromium-browser /usr/bin/google-chrome
+
+      - name: Install Python dependencies
+        run: |
+          pip install --upgrade pip
           pip install selenium beautifulsoup4 requests
 
-      - name: Run script
-        run: |
-          export PATH=$PATH:/usr/lib/chromium-browser/
-          python selenium-test.py
+      - name: Run Selenium script
+        run: python selenium-test.py

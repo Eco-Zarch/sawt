@@ -28,6 +28,8 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install selenium beautifulsoup4 requests
+          pip install google-api-python-client oauth2client pandas httplib2
+
 
       - name: Run Selenium script
         run: python selenium-test.py

@@ -132,6 +132,7 @@ def run_scraper_and_YT(videos_to_process, df, LOG_FILE):
         save_download = os.path.join(project_root, "run_pipeline", "downloaded_videos")
         os.makedirs(save_download, exist_ok=True)
 
+
         filename = f"{file_type}_{os.path.basename(url).split('?')[0]}"
         local_filepath = os.path.join(save_download, filename)
 

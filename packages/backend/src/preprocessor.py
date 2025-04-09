@@ -13,10 +13,13 @@ from langchain_experimental.text_splitter import SemanticChunker
 from langchain.docstore.document import Document
 import sys
 import pandas as pd
+import openai
 
 
 logger = logging.getLogger(__name__)
 dir = Path(__file__).parent.absolute()
+
+
 
 
 def create_embeddings():
@@ -193,12 +196,14 @@ def create_db_from_fc_transcripts(fc_json_directory):
 
 
 def create_db_from_test_transcripts(
-    test_json_directory,
+    test_json_directory
 ):  # have this just work for the new files, keep date name, and delete after
     logger.info("Creating database from test transcripts...")
     all_docs = []
-    print("Print CD:", os.getcwd())
+    print("Print CD:", os.getcwd()) # edit so that if nothing is on 3, this step is skipped
+
     # path_for_test_directory = f"packages/backend/{test_json_directory}"
+    
     for doc_file in os.listdir(test_json_directory):
         if not doc_file.endswith(".json"):
             continue
@@ -212,8 +217,9 @@ def create_db_from_test_transcripts(
 
         data = loader.load()
         text_splitter = SemanticChunker(OpenAIEmbeddings())
+
         for doc in data:
-            chunks = text_splitter.split_text(doc.page_content)
+            chunks = text_splitter.split_text(doc.page_content)  ####
             for chunk in chunks:
                 new_doc = Document(page_content=chunk, metadata=doc.metadata)
                 # print(
@@ -284,7 +290,7 @@ def create_vector_dbs(
         # Check if a FAISS index already exists at that path
         if os.path.exists(os.path.join(faiss_path, "index.faiss")):
             # Load existing FAISS index
-            db = FAISS.load_local(faiss_path, embeddings)   
+            db = FAISS.load_local(faiss_path, embeddings, allow_dangerous_deserialization=True)   
             # Add new documents 
             db.add_documents(docs)                          
             print("Added new documents to existing FAISS index.")

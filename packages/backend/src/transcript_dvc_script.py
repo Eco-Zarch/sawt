@@ -25,7 +25,8 @@ from packages.backend.src.__main__ import main
 
 def get_transcripts(video_list, df, LOG_FILE):
 
-    df = run_src(video_list, transcript_path, df, LOG_FILE)
+    if len(video_list) > 0:
+        df = run_src(video_list, transcript_path, df, LOG_FILE)
     os.chdir(project_root)  
     df = main(df, LOG_FILE)
     os.chdir(project_root)  

@@ -1,4 +1,4 @@
-name: Daily Run Pipeline
+name: Daily Run Pipeline TEST
 
 on:
   schedule:
@@ -27,7 +27,7 @@ jobs:
           pip install -r run_pipeline/requirements.txt
 
       - name: Run pipeline script
-        working-directory: run_pipeline
+        working-directory: webscraper
         run: |
           echo "Running run_pipeline..."
-          python __main__.py
+          python scraper-test.py

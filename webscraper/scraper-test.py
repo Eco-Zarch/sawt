@@ -22,7 +22,6 @@ import re
 import ssl
 
 
-print("scraper_YTupload.py Loaded Correctly")
 current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(current_dir, ".."))
 
@@ -304,11 +303,14 @@ if os.path.exists(LOG_FILE):
     for col in columns:
         if col not in df.columns:
             df[col] = None
+            print(col)
     else:
         df = pd.DataFrame(columns=columns)
 
+    print("hi")
     df["date"] = df["date"].apply(clean_up_dates)
     df.to_json(LOG_FILE, orient="records", indent=4)
 
     print("running main")
-    df = run_scraper_and_YT(1, df, LOG_FILE)
+
+df = run_scraper_and_YT(1, df, LOG_FILE)

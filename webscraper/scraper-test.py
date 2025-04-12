@@ -137,10 +137,27 @@ def run_scraper_and_YT(videos_to_process, df, LOG_FILE):
             "Referer": "https://cityofno.granicus.com/",  # adjust as appropriate
         }
 
-
         print("Log - pre response")
-        response = requests.get(url, headers=headers, stream=True)
-        response.raise_for_status()
+        try:
+            response = requests.get(url, headers=headers, stream=True)
+            response.raise_for_status()  # Raises HTTPError for bad responses (4xx or 5xx)
+        except requests.exceptions.HTTPError as http_err:
+            # Prints the HTTP error and the response body if available.
+            print(f"HTTP error occurred: {http_err} - Response content: {http_err.response.text}")
+        except Exception as err:
+            # Catch any other exception and print it.
+            print(f"An error occurred: {err}")
+        else:
+            # If no exception occurs, you can process the response here.
+            print("Request succeeded!")
+            # For example:
+            print(response.content)
+
+
+
+      #  print("Log - pre response")
+      #  response = requests.get(url, headers=headers, stream=True)
+       # response.raise_for_status()
         print("Log - post response raise status")
 
         if "text/html" in response.headers.get("Content-Type", ""):

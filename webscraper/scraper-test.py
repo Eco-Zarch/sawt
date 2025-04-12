@@ -134,7 +134,9 @@ def run_scraper_and_YT(videos_to_process, df, LOG_FILE):
 
         headers = {
             "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
-            "Referer": "https://cityofno.granicus.com/",  # adjust as appropriate
+            "Referer": "https://cityofno.granicus.com/", 
+            "Accept": "text/html,application/xhtml+ml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+            "Accept-Language": "en-US,en;q=0.9"
         }
 
         print("Log - pre response")
@@ -151,7 +153,7 @@ def run_scraper_and_YT(videos_to_process, df, LOG_FILE):
             # If no exception occurs, you can process the response here.
             print("Request succeeded!")
             # For example:
-            print(response.content)
+           # print(response.content)
 
 
 
@@ -299,7 +301,7 @@ def clean_up_dates(date_str):
 
 
 LOG_FILE = os.path.join(
-    project_root, "run_pipeline", "city_council_video_status_log.json"
+    project_root, "run_pipeline", "TEST_city_council_video_status_log.json"
 )
 # Load existing DataFrame from JSON file if it exists, else create a new one.
 columns = [

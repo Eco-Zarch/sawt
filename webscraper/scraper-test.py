@@ -137,8 +137,11 @@ def run_scraper_and_YT(videos_to_process, df, LOG_FILE):
             "Referer": "https://cityofno.granicus.com/",  # adjust as appropriate
         }
 
+
+        print("Log - pre response")
         response = requests.get(url, headers=headers, stream=True)
         response.raise_for_status()
+        print("Log - post response raise status")
 
         if "text/html" in response.headers.get("Content-Type", ""):
             soup = BeautifulSoup(response.text, "html.parser")
@@ -154,6 +157,7 @@ def run_scraper_and_YT(videos_to_process, df, LOG_FILE):
 
             print(f"{file_type.capitalize()} saved as text: {local_filepath}")
         else:
+            print("Log - in else statement to download")
             with open(local_filepath, "wb") as f:
                 for chunk in response.iter_content(chunk_size=8192):
                     f.write(chunk)
@@ -181,9 +185,7 @@ def run_scraper_and_YT(videos_to_process, df, LOG_FILE):
 
             meeting = meetings[index]
             # print("Print Meeting: ",meeting)
-            print(
-                f"\nDownloading meeting: {meeting['title']} on {meeting['date']} at {meeting['time']}"
-            )
+
 
             metadata = {
                 "meeting_id": meeting["meeting_id"],
@@ -198,9 +200,8 @@ def run_scraper_and_YT(videos_to_process, df, LOG_FILE):
 
             if "meeting_id" in meeting:
                 metadata["meeting_id"] = meeting["meeting_id"]
-                metadata["mp4_path"] = download_file(
-                    meeting["meeting_id"], file_type="mp4_link"
-                )
+                print( f"\nDownloading meeting: {meeting['title']} on {meeting['date']} at {meeting['time']}" )
+                metadata["mp4_path"] = download_file(meeting["meeting_id"], file_type="mp4_link")
                 df.loc[df["meeting_id"] == metadata["meeting_id"], "mp4_path"] = (
                     metadata["mp4_path"]
                 )

@@ -106,7 +106,7 @@ def wait_for_complete_download(download_path, timeout=300, stable_time=10):
 
 # Usage in your Selenium workflow:
 print("Waiting for video download to complete...")
-downloaded_video_path = wait_for_complete_download(download_dir, timeout=300)
+downloaded_video_path = wait_for_complete_download(download_dir, timeout=3600)
 
 browser_logs = driver.get_log("browser")
 for entry in browser_logs:

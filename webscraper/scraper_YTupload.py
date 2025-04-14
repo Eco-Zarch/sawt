@@ -150,8 +150,10 @@ def run_scraper_and_YT(videos_to_process, df, LOG_FILE):
    
         }
         response = requests.get(url, headers=headers, stream=True)
-        response.raise_for_status()
         time.sleep(10)
+        print("post sleep in download 2")
+        response.raise_for_status()
+       
         print("post sleep in download 2")
 
         if "text/html" in response.headers.get("Content-Type", ""):

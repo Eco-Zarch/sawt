@@ -48,6 +48,8 @@ def run_scraper_and_YT(videos_to_process, df, LOG_FILE):
         response = requests.get(URL)
         response.raise_for_status()
 
+        time.sleep(10)
+
         soup = BeautifulSoup(response.text, "html.parser")
 
         meetings = []
@@ -97,7 +99,8 @@ def run_scraper_and_YT(videos_to_process, df, LOG_FILE):
                         else:
                             meeting_data["meeting_id"] = meeting_id
                             meeting_data["state"] = 0
-                    
+
+                    time.sleep(10)
                 if meeting_data["meeting_id"] != None:
                     meetings.append(meeting_data)
                     #print("New Meeting Added: ",meetings)
@@ -134,6 +137,8 @@ def run_scraper_and_YT(videos_to_process, df, LOG_FILE):
 
 
         filename = f"{file_type}_{os.path.basename(url).split('?')[0]}"
+        time.sleep(10)
+        print("post sleep in download 1")
         local_filepath = os.path.join(save_download, filename)
 
 
@@ -146,6 +151,8 @@ def run_scraper_and_YT(videos_to_process, df, LOG_FILE):
         }
         response = requests.get(url, headers=headers, stream=True)
         response.raise_for_status()
+        time.sleep(10)
+        print("post sleep in download 2")
 
         if "text/html" in response.headers.get("Content-Type", ""):
             soup = BeautifulSoup(response.text, "html.parser")
@@ -163,6 +170,7 @@ def run_scraper_and_YT(videos_to_process, df, LOG_FILE):
             with open(local_filepath, "wb") as f:
                 for chunk in response.iter_content(chunk_size=8192):
                     f.write(chunk)
+                    time.sleep(5)
 
 
             print(f"Video downloaded: {local_filepath}")

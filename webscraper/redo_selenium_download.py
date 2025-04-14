@@ -48,7 +48,7 @@ prefs = {
 chrome_options.add_experimental_option("prefs", prefs)
 chrome_options.add_argument("--headless")
 chrome_options.add_argument("--disable-gpu")
-chrome_options.binary_location = "/usr/bin/chromium-browser"
+chrome_options.binary_location = "/usr/bin/chromium-browser" #hash out when running locally
 
 chrome_options.set_capability("goog:loggingPrefs", {"browser": "ALL"})
 
@@ -61,7 +61,7 @@ driver.execute_cdp_cmd(
 )
 
 # The video URL to download.
-video_url = "https://archive-video.granicus.com/cityofno/cityofno_1ce39a38-8d1b-4d88-ad71-bb2b9f7bea3b.mp4"
+video_url = "https://archive-video.granicus.com/cityofno/cityofno_39a65f9c-2a63-4182-8089-a9d3e4b979da.mp4"
 driver.get(video_url)
 
 # Function to wait for the download to complete.

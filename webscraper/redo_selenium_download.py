@@ -61,7 +61,7 @@ driver.execute_cdp_cmd(
 )
 
 # The video URL to download.
-video_url = "https://archive-video.granicus.com/cityofno/cityofno_470210ac-a9f1-427f-9d6c-8e935c948d0f.mp4"
+video_url = "https://archive-video.granicus.com/cityofno/cityofno_1ce39a38-8d1b-4d88-ad71-bb2b9f7bea3b.mp4"
 driver.get(video_url)
 
 # Function to wait for the download to complete.

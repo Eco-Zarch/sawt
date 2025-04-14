@@ -50,14 +50,9 @@ chrome_options.add_argument("--headless")
 chrome_options.add_argument("--disable-gpu")
 chrome_options.binary_location = "/usr/bin/chromium-browser"
 
+chrome_options.set_capability("goog:loggingPrefs", {"browser": "ALL"})
 
-caps = DesiredCapabilities.CHROME.copy()
-caps["goog:loggingPrefs"] = {"browser": "ALL"}
-
-driver = webdriver.Chrome(options=chrome_options, desired_capabilities=caps)
-
-
-#driver = webdriver.Chrome(options=chrome_options)
+driver = webdriver.Chrome(options=chrome_options)
 
 # In headless mode, explicitly set the download behavior.
 driver.execute_cdp_cmd(

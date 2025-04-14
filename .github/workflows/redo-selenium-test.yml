@@ -1,0 +1,37 @@
+name: REDO Run NEW Selenium Scraper
+
+on:
+  workflow_dispatch:
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install Chrome and Chromedriver
+        run: |
+          sudo apt update
+          sudo apt-get install -y google-chrome-stable
+          sudo apt install -y chromium-browser chromium-chromedriver
+          sudo ln -sf /usr/bin/chromedriver /usr/local/bin/chromedriver
+          sudo ln -sf /usr/bin/chromium-browser /usr/bin/google-chrome
+
+      - name: Install Python dependencies
+        run: |
+          pip install --upgrade pip
+          pip install selenium beautifulsoup4 requests
+          pip install google-api-python-client oauth2client pandas httplib2
+
+
+      - name: REDO Run new selenium script
+        working-directory: webscraper
+        run: |
+          python redo_selenium_download.py

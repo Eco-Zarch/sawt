@@ -90,7 +90,7 @@ def wait_for_complete_download(download_path, timeout=300, stable_time=10):
 
 # Usage in your Selenium workflow:
 print("Waiting for video download to complete...")
-downloaded_video_path = wait_for_complete_download(download_dir, timeout=300)
+downloaded_video_path = wait_for_complete_download(download_dir, timeout=3600)
 
 # Wait for the download to complete.
 

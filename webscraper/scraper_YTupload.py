@@ -9,6 +9,7 @@ import random
 import sys
 import time
 import pandas as pd
+import logging
 
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
@@ -22,6 +23,9 @@ import re
 
 import ssl
 
+logging.basicConfig(level=logging.DEBUG,
+                    format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 print("scraper_YTupload.py Loaded Correctly")
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -148,12 +152,18 @@ def run_scraper_and_YT(videos_to_process, df, LOG_FILE):
         "Referer": "https://archive-video.granicus.com/",
         "Accept": "text/html,application/xhtml+ml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
         "Accept-Language": "en-US,en;q=0.9"
-   
         }
+
+        logger.debug("Sending request with headers: %s", headers)
+
         response = requests.get(url, headers=headers, stream=True)
         time.sleep(10)
         print("post sleep in download 2")
+        logger.debug("Response headers: %s", response.headers)
+        logger.debug("Sent request headers: %s", response.request.headers)
         response.raise_for_status()
+        logger.debug("Response headers: %s", response.headers)
+        logger.debug("Sent request headers: %s", response.request.headers)
        
     
 

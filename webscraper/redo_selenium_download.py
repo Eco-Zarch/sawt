@@ -16,6 +16,7 @@ import random
 import sys
 import time
 import pandas as pd
+import logging 
 
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
@@ -23,6 +24,13 @@ from googleapiclient.http import MediaFileUpload
 from oauth2client.client import flow_from_clientsecrets
 from oauth2client.file import Storage
 from oauth2client.tools import argparser, run_flow
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+
+
+logging.basicConfig(level=logging.DEBUG,
+                    format='%(asctime)s - %(levelname)s - %(message)s',
+                    force=True)
+logger = logging.getLogger(__name__)
 
 # Set up the download directory and ensure it exists.
 download_dir = os.path.abspath("test_downloads")  # Change path as needed
@@ -42,7 +50,14 @@ chrome_options.add_argument("--headless")
 chrome_options.add_argument("--disable-gpu")
 chrome_options.binary_location = "/usr/bin/chromium-browser"
 
-driver = webdriver.Chrome(options=chrome_options)
+
+caps = DesiredCapabilities.CHROME.copy()
+caps["goog:loggingPrefs"] = {"browser": "ALL"}
+
+driver = webdriver.Chrome(options=chrome_options, desired_capabilities=caps)
+
+
+#driver = webdriver.Chrome(options=chrome_options)
 
 # In headless mode, explicitly set the download behavior.
 driver.execute_cdp_cmd(
@@ -72,7 +87,8 @@ def wait_for_complete_download(download_path, timeout=300, stable_time=10):
         if files:
             file_path = os.path.join(download_path, files[0])
             current_size = os.path.getsize(file_path)
-            print(f"[INFO] Current file size: {current_size} bytes")
+            logger.debug(f"Current file size: {current_size} bytes")
+            #print(f"[INFO] Current file size: {current_size} bytes")
             
             # Check if file size has changed
             if current_size != last_size:
@@ -83,18 +99,23 @@ def wait_for_complete_download(download_path, timeout=300, stable_time=10):
                 if time.time() - stable_start >= stable_time:
                     return file_path
         else:
-            print("[INFO] No file found yet.")
+            #print("[INFO] No file found yet.")
+            logger.debug("No file found yet.")
             stable_start = None
 
         if time.time() - start_time > timeout:
-            print("[ERROR] Timeout reached waiting for download to complete.")
+            #print("[ERROR] Timeout reached waiting for download to complete.")
+            logger.error("Timeout reached waiting for download to complete.")
             return None
         time.sleep(2)
 
 # Usage in your Selenium workflow:
 print("Waiting for video download to complete...")
-downloaded_video_path = wait_for_complete_download(download_dir, timeout=3600)
+downloaded_video_path = wait_for_complete_download(download_dir, timeout=300)
 
+browser_logs = driver.get_log("browser")
+for entry in browser_logs:
+    logger.debug("Browser log: %s", entry)
 # Wait for the download to complete.
 
 driver.quit()

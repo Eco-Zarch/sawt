@@ -59,7 +59,7 @@ if __name__ == "__main__":
     df.to_json(LOG_FILE, orient="records", indent=4)
 
     print("running main")
-    df = run_scraper_and_YT(4, df, LOG_FILE)
+    df = run_scraper_and_YT(1, df, LOG_FILE)
     print(f"Print df after scraper: {df}")
     print("scraper and YT finished execution")
 
@@ -68,7 +68,7 @@ if __name__ == "__main__":
     state_2_list = df[df["state"] == 2].to_dict(orient="records")
     video_list = []
 
-    for meeting in state_2_list:
+    for meeting in state_2_list:  #something needs to be fixed if there is nothing at stage 2
         video_list.append(
             [
                 meeting["YT_link"],
@@ -80,8 +80,8 @@ if __name__ == "__main__":
 
     # print(f"video list from main: {video_list}")
 
-   # df = get_transcripts(video_list, df, LOG_FILE)
-    print(f"Final df: {df}")
+    #df = get_transcripts(video_list, df, LOG_FILE)
+   # print(f"Final df: {df}")
 
 
 # except Exception as e:

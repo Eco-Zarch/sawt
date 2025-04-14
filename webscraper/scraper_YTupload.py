@@ -136,11 +136,14 @@ def run_scraper_and_YT(videos_to_process, df, LOG_FILE):
         filename = f"{file_type}_{os.path.basename(url).split('?')[0]}"
         local_filepath = os.path.join(save_download, filename)
 
+
         headers = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
-        "Referer": "https://cityofno.granicus.com/",  # adjust as appropriate
-            }
-
+        "Referer": "https://cityofno.granicus.com/",
+        "Accept": "text/html,application/xhtml+ml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+        "Accept-Language": "en-US,en;q=0.9"
+   
+        }
         response = requests.get(url, headers=headers, stream=True)
         response.raise_for_status()
 
@@ -156,6 +159,7 @@ def run_scraper_and_YT(videos_to_process, df, LOG_FILE):
 
             print(f"{file_type.capitalize()} saved as text: {local_filepath}")
         else:
+            print("In else statement to download video")
             with open(local_filepath, "wb") as f:
                 for chunk in response.iter_content(chunk_size=8192):
                     f.write(chunk)
@@ -186,7 +190,6 @@ def run_scraper_and_YT(videos_to_process, df, LOG_FILE):
 
             meeting = meetings[index]
             #print("Print Meeting: ",meeting)
-            print(f"\nDownloading meeting: {meeting['title']} on {meeting['date']} at {meeting['time']}")
 
 
             metadata = {
@@ -202,6 +205,7 @@ def run_scraper_and_YT(videos_to_process, df, LOG_FILE):
 
             if "meeting_id" in meeting:
                 metadata["meeting_id"] = meeting["meeting_id"]
+                print(f"\Entering download file for: {meeting['title']} on {meeting['date']} at {meeting['time']}")
                 metadata["mp4_path"] = download_file(meeting["meeting_id"], file_type="mp4_link")
                 df.loc[df["meeting_id"] == metadata["meeting_id"], "mp4_path"] = metadata["mp4_path"] 
                 df.loc[df["meeting_id"] == metadata["meeting_id"],"state"] = 1 # FIX ME: Change to check to make sure path is in Dataframe
@@ -393,7 +397,7 @@ def run_scraper_and_YT(videos_to_process, df, LOG_FILE):
     #print("Meta_data list check when state at 1: ", metadata_list)
 
     os.chdir(webscraper_dir)
-    #youtube, df = get_authenticated_service(df)
+    youtube, df = get_authenticated_service(df)
 
     # Iterate through each processed meeting's metadata
 
@@ -411,10 +415,10 @@ def run_scraper_and_YT(videos_to_process, df, LOG_FILE):
             description = f"Recorded on {date}.\n\nWatch the original video on the New Orleans City Council website here: {watch_link}" # FIX ME: Add to dataframe
 
         try:
-            #print(f"Uploading {video_file} to YouTube...") 
-            print("skip upload for now")
-            #video_id, df = initialize_upload(youtube, video_file, title, description, df)  
-            #print(f"Uploaded: {title}")
+            print(f"Uploading {video_file} to YouTube...") 
+            #print("skip upload for now")
+            video_id, df = initialize_upload(youtube, video_file, title, description, df)  
+            print(f"Uploaded: {title}")
 
         except HttpError as e:
             print(f"Upload failed for {title}: {e}")

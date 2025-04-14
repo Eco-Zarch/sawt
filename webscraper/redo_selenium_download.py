@@ -40,6 +40,7 @@ prefs = {
 chrome_options.add_experimental_option("prefs", prefs)
 chrome_options.add_argument("--headless")
 chrome_options.add_argument("--disable-gpu")
+chrome_options.binary_location = "/usr/bin/chromium-browser"
 
 driver = webdriver.Chrome(options=chrome_options)
 

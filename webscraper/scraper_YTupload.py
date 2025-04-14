@@ -144,7 +144,8 @@ def run_scraper_and_YT(videos_to_process, df, LOG_FILE):
 
         headers = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
-        "Referer": "https://cityofno.granicus.com/",
+       # "Referer": "https://cityofno.granicus.com/",
+        "Referer": "https://archive-video.granicus.com/",
         "Accept": "text/html,application/xhtml+ml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
         "Accept-Language": "en-US,en;q=0.9"
    
@@ -154,7 +155,7 @@ def run_scraper_and_YT(videos_to_process, df, LOG_FILE):
         print("post sleep in download 2")
         response.raise_for_status()
        
-        print("post sleep in download 2")
+    
 
         if "text/html" in response.headers.get("Content-Type", ""):
             soup = BeautifulSoup(response.text, "html.parser")

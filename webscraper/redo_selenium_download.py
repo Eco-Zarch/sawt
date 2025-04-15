@@ -48,7 +48,7 @@ prefs = {
 chrome_options.add_experimental_option("prefs", prefs)
 chrome_options.add_argument("--headless")
 chrome_options.add_argument("--disable-gpu")
-#chrome_options.binary_location = "/usr/bin/chromium-browser" #hash out when running locally
+chrome_options.binary_location = "/usr/bin/chromium-browser" #hash out when running locally
 
 chrome_options.set_capability("goog:loggingPrefs", {"browser": "ALL"})
 

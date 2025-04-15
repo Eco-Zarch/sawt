@@ -66,7 +66,7 @@ driver.execute_cdp_cmd(
 )
 
 # The video URL to download.
-video_url = "https://archive-video.granicus.com/cityofno/cityofno_39a65f9c-2a63-4182-8089-a9d3e4b979da.mp4"
+video_url = "https://archive-video.granicus.com/cityofno/cityofno_43e65f01-fb74-49c6-8304-06ff53477137.mp4"
 driver.get(video_url)
 
 logger.info(f"Navigated to {video_url} to start download.")
@@ -322,7 +322,7 @@ if downloaded_file:
     youtube = get_authenticated_service()
     print("starting video id")
     #print("skip video upload for now")
-    video_id = initialize_upload(youtube, downloaded_file, title= "City of No Test", description="selenium upload test new") 
+    video_id = initialize_upload(youtube, downloaded_file, title= "2hr 30 min test", description="selenium upload test new") 
     # Now upload the downloaded video to YouTube
     #upload_response = upload_video(downloaded_file,
       #                             title="City of No Video",

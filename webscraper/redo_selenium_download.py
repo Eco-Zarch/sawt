@@ -48,7 +48,7 @@ prefs = {
 chrome_options.add_experimental_option("prefs", prefs)
 chrome_options.add_argument("--headless")
 chrome_options.add_argument("--disable-gpu")
-chrome_options.binary_location = "/usr/bin/chromium-browser" #hash out when running locally
+#chrome_options.binary_location = "/usr/bin/chromium-browser" #hash out when running locally
 
 chrome_options.set_capability("goog:loggingPrefs", {"browser": "ALL"})
 
@@ -63,6 +63,16 @@ driver.execute_cdp_cmd(
 # The video URL to download.
 video_url = "https://archive-video.granicus.com/cityofno/cityofno_470210ac-a9f1-427f-9d6c-8e935c948d0f.mp4"
 driver.get(video_url)
+
+logger.info(f"Navigated to {video_url} to start download.")
+
+# Wait some time to let the download process begin
+time.sleep(10)
+
+# Capture and log the browser console messages
+browser_logs = driver.get_log("browser")
+for entry in browser_logs:
+    logger.debug("Browser log: %s", entry)
 
 def log_download_directory(download_path):
     files = os.listdir(download_path)
@@ -117,9 +127,6 @@ def wait_for_complete_download(download_path, timeout=300, stable_time=10, log_i
 print("Waiting for video download to complete...")
 downloaded_video_path = wait_for_complete_download(download_dir, timeout=3600)
 
-browser_logs = driver.get_log("browser")
-for entry in browser_logs:
-    logger.debug("Browser log: %s", entry)
 # Wait for the download to complete.
 
 driver.quit()

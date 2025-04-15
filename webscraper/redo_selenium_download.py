@@ -2,7 +2,10 @@ import os
 import time
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.action_chains import ActionChains
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -48,6 +51,8 @@ prefs = {
 chrome_options.add_experimental_option("prefs", prefs)
 chrome_options.add_argument("--headless")
 chrome_options.add_argument("--disable-gpu")
+chrome_options.add_argument("--no-sandbox")
+chrome_options.add_argument("--disable-dev-shm-usage")
 chrome_options.binary_location = "/usr/bin/chromium-browser" #hash out when running locally
 
 chrome_options.set_capability("goog:loggingPrefs", {"browser": "ALL"})
@@ -65,6 +70,17 @@ video_url = "https://archive-video.granicus.com/cityofno/cityofno_470210ac-a9f1-
 driver.get(video_url)
 
 logger.info(f"Navigated to {video_url} to start download.")
+
+try:
+    WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.TAG_NAME, "video")))
+    logger.info("Video element found on the page.")
+except Exception as e:
+    logger.error("Video element not found on the page.", exc_info=e)
+
+
+driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+time.sleep(2)  # Wait for any dynamic content to load
+
 
 # Wait some time to let the download process begin
 time.sleep(10)

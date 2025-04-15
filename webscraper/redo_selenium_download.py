@@ -64,8 +64,12 @@ driver.execute_cdp_cmd(
 video_url = "https://archive-video.granicus.com/cityofno/cityofno_39a65f9c-2a63-4182-8089-a9d3e4b979da.mp4"
 driver.get(video_url)
 
+def log_download_directory(download_path):
+    files = os.listdir(download_path)
+    logger.debug(f"Files currently in {download_path}: {files}")
+
 # Function to wait for the download to complete.
-def wait_for_complete_download(download_path, timeout=300, stable_time=10):
+def wait_for_complete_download(download_path, timeout=300, stable_time=10, log_interval = 30):
     """
     Polls the download directory until there is a file that is no longer
     a temporary '.crdownload' file and whose size is stable for a specified 
@@ -95,7 +99,11 @@ def wait_for_complete_download(download_path, timeout=300, stable_time=10):
                     return file_path
         else:
             #print("[INFO] No file found yet.")
-            logger.debug("No file found yet.")
+            now = time.time()
+            if now - last_log_time >= log_interval:
+                logger.debug("No file found yet. Checking directory contents:")
+                log_download_directory(download_path)
+                last_log_time = now
             stable_start = None
 
         if time.time() - start_time > timeout:

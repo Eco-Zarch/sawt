@@ -61,7 +61,7 @@ driver.execute_cdp_cmd(
 )
 
 # The video URL to download.
-video_url = "https://archive-video.granicus.com/cityofno/cityofno_39a65f9c-2a63-4182-8089-a9d3e4b979da.mp4"
+video_url = "https://archive-video.granicus.com/cityofno/cityofno_470210ac-a9f1-427f-9d6c-8e935c948d0f.mp4"
 driver.get(video_url)
 
 def log_download_directory(download_path):
@@ -296,13 +296,14 @@ if downloaded_file:
     print("starting youtube")
     #os.chdir(webscraper_path)
     #os.path.abspath(os.path.join("webscraper", CLIENT_SECRETS_FILE))
-    youtube = get_authenticated_service()
+   # youtube = get_authenticated_service()
     print("starting video id")
-    video_id = initialize_upload(youtube, downloaded_file, title= "City of No Test", description="selenium upload test new") 
+    print("skip video upload for now")
+    #video_id = initialize_upload(youtube, downloaded_file, title= "City of No Test", description="selenium upload test new") 
     # Now upload the downloaded video to YouTube
     #upload_response = upload_video(downloaded_file,
       #                             title="City of No Video",
       #                             description="Video uploaded automatically via GitHub Actions.")
-    print("YouTube upload response:", video_id)
+   # print("YouTube upload response:", video_id)
 else:
     print("No MP4 links found.")

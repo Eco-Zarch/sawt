@@ -78,6 +78,7 @@ def wait_for_complete_download(download_path, timeout=300, stable_time=10, log_i
     start_time = time.time()
     last_size = -1
     stable_start = None
+    last_log_time = start_time
 
     while True:
         # List all files (excluding temporary .crdownload files)

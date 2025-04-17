@@ -59,7 +59,7 @@ if __name__ == "__main__":
     df.to_json(LOG_FILE, orient="records", indent=4)
 
     print("running main")
-    df = run_scraper_and_YT(1, df, LOG_FILE)
+    df = run_scraper_and_YT(3, df, LOG_FILE)
     print(f"Print df after scraper: {df}")
     print("scraper and YT finished execution")
 

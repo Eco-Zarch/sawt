@@ -145,19 +145,21 @@ def run_scraper_and_YT(videos_to_process, df, LOG_FILE):
         print("post sleep in download 1")
         local_filepath = os.path.join(save_download, filename)
 
-
+        """
         headers = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
-       # "Referer": "https://cityofno.granicus.com/",
         "Referer": "https://archive-video.granicus.com/",
         "Accept": "text/html,application/xhtml+ml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-        "Accept-Language": "en-US,en;q=0.9"
+        "Accept-Language": "en-US,en;q=0.9",
+        "Connection": "keep-alive",
+        "Accept-Encoding": "gzip, deflate"
         }
 
         logger.debug("Sending request with headers: %s", headers)
-
-        response = requests.get(url, headers=headers, stream=True)
+        """
+        #response = requests.get(url, headers=headers, stream=True)
         time.sleep(10)
+        response = requests.get(url, stream=True)
         print("post sleep in download 2")
         logger.debug("Response headers: %s", response.headers)
         logger.debug("Sent request headers: %s", response.request.headers)
@@ -183,9 +185,9 @@ def run_scraper_and_YT(videos_to_process, df, LOG_FILE):
             with open(local_filepath, "wb") as f:
                 for chunk in response.iter_content(chunk_size=8192):
                     f.write(chunk)
-                    time.sleep(5)
+                    #time.sleep(5)
 
-
+            time.sleep(5)
             print(f"Video downloaded: {local_filepath}")
 
 

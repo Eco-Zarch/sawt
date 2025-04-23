@@ -4,11 +4,13 @@ import os
 import pandas as pd
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
-project_root = os.path.abspath(os.path.join(current_dir, ".."))
+project_root = os.path.abspath(os.path.join(current_dir, ".."))  
 
+print(current_dir)
+print(project_root)
 sys.path.append(project_root)
 
-from webscraper.download_and_YTupload import run_download_and_YT
+from run_pipeline.part_1.download_and_YTupload import run_download_and_YT
 from packages.backend.src.transcript_dvc_script import get_transcripts
 
 
@@ -64,10 +66,10 @@ if __name__ == "__main__":
             ]
         )
 
-    # print(f"video list from main: {video_list}")
+    print(f"video list from main: {video_list}")
 
-    #df = get_transcripts(video_list, df, LOG_FILE)
-   # print(f"Final df: {df}")
+    df = get_transcripts(video_list, df, LOG_FILE)
+    print(f"Final df: {df}")
 
 
 # except Exception as e:

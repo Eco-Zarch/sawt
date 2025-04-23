@@ -8,7 +8,7 @@ project_root = os.path.abspath(os.path.join(current_dir, ".."))
 
 sys.path.append(project_root)
 
-from sawt.webscraper.download_and_YTupload import run_download_and_YT
+from webscraper.download_and_YTupload import run_download_and_YT
 from packages.backend.src.transcript_dvc_script import get_transcripts
 
 
@@ -54,7 +54,7 @@ if __name__ == "__main__":
     state_2_list = df[df["state"] == 2].to_dict(orient="records")
     video_list = []
 
-    for meeting in state_2_list:  #something needs to be fixed if there is nothing at stage 2
+    for meeting in state_2_list: 
         video_list.append(
             [
                 meeting["YT_link"],

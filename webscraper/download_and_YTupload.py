@@ -10,6 +10,8 @@ import pandas as pd
 import logging
 import re
 import ssl
+import json
+from dotenv import load_dotenv
 
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
@@ -100,7 +102,7 @@ def run_download_and_YT(videos_to_process, df, LOG_FILE):
 
     def get_date_time(raw_text):
         """
-        Helper functiont that gets and returns the date and time from a raw text string.
+        Helper function that gets and returns the date and time from a raw text string.
         """
         match = re.search(r"(\w+,\s\w+\s\d{1,2},\s\d{4})\s*-\s*(\d{1,2}:\d{2}\s*[APMapm]{2})", raw_text)
         if match:
@@ -177,8 +179,13 @@ def run_download_and_YT(videos_to_process, df, LOG_FILE):
     #   https://developers.google.com/youtube/v3/guides/authentication
     # For more information about the client_secrets.json file format, see:
     #   https://developers.google.com/api-client-library/python/guide/aaa_client_secrets
-    CLIENT_SECRETS_FILE = "client_secret_1091585370962-sdu3p4mqmkkj49f0mun6qdu45p92np1n.apps.googleusercontent.com.json" #make file in github secrets!!!
-
+    load_dotenv()
+    raw_secrets = os.getenv("YOUTUBE_CLIENT_SECRET_JSON")
+    dict_secrets = json.loads(raw_secrets)
+    client_secrets_path = os.path.join(project_root, "webscraper", "client_secret.json")
+    with open(client_secrets_path, "w", encoding="utf-8") as f:
+        json.dump(dict_secrets, f, ensure_ascii=False, indent=2)
+    CLIENT_SECRETS_FILE = client_secrets_path
     # This OAuth 2.0 access scope allows an application to upload files to the
     # authenticated user's YouTube channel, but doesn't allow other types of access.
     YOUTUBE_UPLOAD_SCOPE = "https://www.googleapis.com/auth/youtube.upload"
@@ -374,6 +381,7 @@ def run_download_and_YT(videos_to_process, df, LOG_FILE):
     youtube_upload_list = df[df['state'] == 1].to_dict(orient='records')
     os.chdir(webscraper_dir)
     youtube, df = get_authenticated_service(df)
+    os.remove("client_secret.json") #COME BACK AND TEST
 
 
     """

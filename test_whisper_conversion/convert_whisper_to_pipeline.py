@@ -51,7 +51,7 @@ for filename in os.listdir(INPUT_FOLDER):
         # Save the converted output to a new JSON file in the output folder
         output_path = os.path.join(OUTPUT_FOLDER, f"converted_{filename}")
         with open(output_path, "w") as out:
-            json.dump(new_data, out, indent=2)
+            json.dump({"messages": new_data}, out, indent=2)
 
         # Message to confirm the file was converted
         print(f"Converted {filename} at {output_path}")

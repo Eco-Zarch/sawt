@@ -8,7 +8,7 @@ project_root = os.path.abspath(os.path.join(current_dir, ".."))
 
 sys.path.append(project_root)
 
-from webscraper.scraper_YTupload import run_scraper_and_YT
+from sawt.webscraper.download_and_YTupload import run_download_and_YT
 from packages.backend.src.transcript_dvc_script import get_transcripts
 
 
@@ -29,25 +29,11 @@ if __name__ == "__main__":
         except:
             return date_str
 
-    # try:
-    LOG_FILE = os.path.join(
-        project_root, "run_pipeline", "city_council_video_status_log.json"
-    )
     # Load existing DataFrame from JSON file if it exists, else create a new one.
-    columns = [
-        "meeting_id",
-        "title",
-        "date",
-        "time",
-        "watch_link",
-        "mp4_path",
-        "YT_link",
-        "state",
-    ]
+    LOG_FILE = os.path.join( project_root, "run_pipeline", "city_council_video_status_log.json")
+    columns = [ "meeting_id", "title", "date", "time", "watch_link", "mp4_path", "YT_link","state"]
     if os.path.exists(LOG_FILE):
-        # df=pd.read_json(LOG_FILE, orient="records")
         df = pd.read_json(LOG_FILE, dtype={"date": str}, convert_dates=False)
-        # df = pd.read_json(LOG_FILE)
         print("Loaded existing json to df")
         for col in columns:
             if col not in df.columns:
@@ -59,7 +45,7 @@ if __name__ == "__main__":
     df.to_json(LOG_FILE, orient="records", indent=4)
 
     print("running main")
-    df = run_scraper_and_YT(3, df, LOG_FILE)
+    df = run_download_and_YT(2, df, LOG_FILE)
     print(f"Print df after scraper: {df}")
     print("scraper and YT finished execution")
 

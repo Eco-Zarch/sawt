@@ -6,6 +6,7 @@ import os
 import pandas as pd
 import time
 import whisper
+import json
 from datetime import timedelta
 
 URL = "https://cityofno.granicus.com/ViewPublisher.php?view_id=42"
@@ -92,13 +93,16 @@ def seconds_to_timestamp(start, end):
 
 
 def convert_output(data):
-    # Create a new list to store reformatted transcript
     formatted_data = []
-    # Loop through each transcript segment
     for segment in data:
+        ts = seconds_to_timestamp(segment["start"], segment["end"])
+        text = segment["text"]
+        # optional: turn " you" into " Thank you."
+        if text.strip().lower() == "you":
+            text = " Thank you."
         entry = {
-            "timestamp": seconds_to_timestamp(segment["start"], segment["end"]),
-            "page_content": segment["text"],
+            "timestamp": ts,
+            "page_content": text,
             "url": None,
             "title": None,
             "publish_date": None,
@@ -109,13 +113,22 @@ def convert_output(data):
 
 def transcribe_video(fname, model):
     result = model.transcribe(fname, verbose=False)
+
+    # save full transcript
     txt_fname = os.path.splitext(fname)[0] + ".txt"
-    print(txt_fname)
-    json_fname = os.path.splitext(fname)[0] + ".json"
-    open(txt_fname, "wt").write(result["text"] + "\n")
+    with open(txt_fname, "wt", encoding="utf-8") as t:
+        t.write(result["text"] + "\n")
+    print(f"saved plain text to {txt_fname}")
+
+    # build JSON structure
     formatted_data = convert_output(result["segments"])
-    pd.DataFrame(formatted_data).to_json(json_fname, orient="records", lines=True)
-    print("saved to %s and %s" % (txt_fname, json_fname))
+    messages = {"messages": formatted_data}
+
+    # write out as a single JSON object
+    json_fname = os.path.splitext(fname)[0] + ".json"
+    with open(json_fname, "wt", encoding="utf-8") as j:
+        json.dump(messages, j, ensure_ascii=False, indent=2)
+    print(f"saved JSON to {json_fname}")
 
 
 # get all links.
@@ -131,8 +144,6 @@ whisper_model = whisper.load_model("small.en")
 
 
 fname = os.path.basename(df["video"][0])
-
-dl_video(df["video"][0], fname)
 
 transcribe_video(fname, whisper_model)
 

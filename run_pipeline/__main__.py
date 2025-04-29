@@ -11,18 +11,18 @@ print(project_root)
 sys.path.append(project_root)
 
 from run_pipeline.part_1.download_and_YTupload import run_download_and_YT
-from packages.backend.src.transcript_dvc_script import get_transcripts
+from run_pipeline.part_2.get_transcripts_vectorize_push import get_transcripts
 
 
 if __name__ == "__main__":
 
-    # call if dates get messed up
+    # call so dates don't get mixed up
     def clean_up_dates(date_str):
         try:
             # Convert string to datetime if it's a timestamp (13-digit ms)
             if date_str and date_str.isdigit() and len(date_str) >= 13:
                 dt = pd.to_datetime(int(date_str), unit="ms")
-                return dt.strftime("%-m/%-d/%Y")  # Or %#m/%#d/%Y on Windows
+                return dt.strftime("%-m/%-d/%Y") 
             # Try parsing regular date strings
             dt = pd.to_datetime(date_str, errors="coerce")
             if not pd.isna(dt):
@@ -46,10 +46,12 @@ if __name__ == "__main__":
     df["date"] = df["date"].apply(clean_up_dates)
     df.to_json(LOG_FILE, orient="records", indent=4)
 
-    print("running main")
-    df = run_download_and_YT(2, df, LOG_FILE)
-    print(f"Print df after scraper: {df}")
-    print("scraper and YT finished execution")
+    
+    # TO UPDATE: Set number of meetings/rows you want to look at/ add to dataframe
+    num_meetings_to_search = 2
+  #  df = run_download_and_YT(num_meetings_to_search, df, LOG_FILE)
+
+    #print("scraper and YT upload finished execution")
 
     # Video list will be updated by the dataframe, with all videos at step 2
     os.chdir(project_root)
@@ -66,7 +68,6 @@ if __name__ == "__main__":
             ]
         )
 
-    print(f"video list from main: {video_list}")
 
     df = get_transcripts(video_list, df, LOG_FILE)
     print(f"Final df: {df}")

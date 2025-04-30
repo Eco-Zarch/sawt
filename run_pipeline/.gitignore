@@ -1,1 +1,3 @@
-.env
+.env/
+youtube-oauth2.json
+

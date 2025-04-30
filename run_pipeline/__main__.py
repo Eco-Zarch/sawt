@@ -49,7 +49,7 @@ if __name__ == "__main__":
     
     # TO UPDATE: Set number of meetings/rows you want to look at/ add to dataframe
     num_meetings_to_search = 2
-  #  df = run_download_and_YT(num_meetings_to_search, df, LOG_FILE)
+    df = run_download_and_YT(num_meetings_to_search, df, LOG_FILE)
 
     #print("scraper and YT upload finished execution")
 

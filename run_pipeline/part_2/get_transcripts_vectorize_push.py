@@ -23,18 +23,20 @@ from packages.pull.src.src2 import run_src
 from packages.backend.src.__main2__ import main
 
 
-
 def get_transcripts(video_list, df, LOG_FILE):
 
     if len(video_list) > 0:
         df = run_src(video_list, transcript_path, df, LOG_FILE)
     os.chdir(sawt_dir)  
-    df = main(df, LOG_FILE)
+    state_3_list = df[df["state"] == 3].to_dict(orient="records")
+    if len(state_3_list) > 0:
+        df = main(df, LOG_FILE)
     os.chdir(sawt_dir)  
-    df = dvc(df, LOG_FILE)
+    state_4_list = df[df["state"] == 4].to_dict(orient="records")
+    if len(state_4_list) > 0:
+        df = dvc(df, LOG_FILE)
     df.to_json(LOG_FILE, orient="records", indent=4)
     return df
-
 
 def dvc(df, LOG_FILE):
     faiss_index_path = "packages/backend/src/cache/faiss_index_in_depth_test" 

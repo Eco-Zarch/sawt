@@ -88,5 +88,25 @@
         "mp4_path":"\/Users\/sydneyfeldman\/Desktop\/Capstone\/sawt\/run_pipeline\/downloaded_videos\/mp4_link_cityofno_5420e908-a311-4485-a59d-ddcac2103c4f.mp4",
         "YT_link":"https:\/\/www.youtube.com\/watch?v=cGifkUCD3uM",
         "state":5
+    },
+    {
+        "meeting_id":"https:\/\/archive-video.granicus.com\/cityofno\/cityofno_418cab12-ece0-4c11-bfba-d4cd539a4b8f.mp4",
+        "title":"City Planning Commission",
+        "date":"4\/22\/2025",
+        "time":"1:42\u00a0PM",
+        "watch_link":"https:\/\/cityofno.granicus.com\/MediaPlayer.php?view_id=42&clip_id=5097",
+        "mp4_path":"\/Users\/sydneyfeldman\/Desktop\/Capstone\/sawt\/run_pipeline\/part_1\/downloaded_videos\/mp4_link_cityofno_418cab12-ece0-4c11-bfba-d4cd539a4b8f.mp4",
+        "YT_link":null,
+        "state":5
+    },
+    {
+        "meeting_id":"https:\/\/archive-video.granicus.com\/cityofno\/cityofno_de34ce14-d4b5-40bd-90dd-3a77599c8f04.mp4",
+        "title":"Joint Governmental Affairs - Community Development Committee",
+        "date":"4\/28\/2025",
+        "time":"9:57\u00a0AM",
+        "watch_link":"https:\/\/cityofno.granicus.com\/MediaPlayer.php?view_id=42&clip_id=5100",
+        "mp4_path":"\/Users\/sydneyfeldman\/Desktop\/Capstone\/sawt\/run_pipeline\/part_1\/downloaded_videos\/mp4_link_cityofno_de34ce14-d4b5-40bd-90dd-3a77599c8f04.mp4",
+        "YT_link":"https:\/\/www.youtube.com\/watch?v=yl3Pm1RrMt4",
+        "state":3
     }
 ]
